@@ -44,7 +44,7 @@ export function printCQQuestionPaper(exam: PublicExam) {
     ).join("") + '</section>'
   ).join("");
   openA4((isWrittenTask ? "Written Practice — " : "CQ Question Paper — ") + exam.title,
-    '<header class="head"><h1>' + (isWrittenTask ? "লিখিত প্রশ্নপত্র" : "সৃজনশীল প্রশ্নপত্র") + '</h1><p>' + escapeHtml(exam.title) + '</p><p>'
+    '<header class="head"><h1>' + (isWrittenTask ? "লিখিত প্রশ্নপত্র" : "সৃজনশীল প্রশ্নপত্র") + '</h1><p>' + escapeHtml(exam.title) + '</p><p>' +
     escapeHtml(exam.subject) + ' · ' + escapeHtml(exam.paper) + '</p><p>অধ্যায়: ' + escapeHtml(exam.chapter) +
     ' · সময়: ' + escapeHtml(exam.durationMinutes) + ' মিনিট</p></header>' +
     '<div class="student"><span>শিক্ষার্থীর নাম: __________________</span><span>তারিখ: ______________</span></div>' +
@@ -71,7 +71,7 @@ export function printCQAnswerPaper(result: ExamResultData) {
     escapeHtml(item.feedback).replace(/\n/g, "<br>") + '</p>' : '') + '</section>'
   ).join("");
   openA4((isWrittenTask ? "Written Answer — " : "CQ Answer Sheet — ") + result.title,
-    '<header class="head"><h1>' + (isWrittenTask ? "লিখিত উত্তর ও মূল্যায়ন" : "সৃজনশীল উত্তর ও মূল্যায়ন") + '</h1><p>' + escapeHtml(result.title) + '</p><p>'
+    '<header class="head"><h1>' + (isWrittenTask ? "লিখিত উত্তর ও মূল্যায়ন" : "সৃজনশীল উত্তর ও মূল্যায়ন") + '</h1><p>' + escapeHtml(result.title) + '</p><p>' +
     escapeHtml(result.subject) + ' · ' + escapeHtml(result.chapter) + '</p><p>CQ নম্বর: ' +
     escapeHtml(result.cqScore) + '/' + escapeHtml(result.cqMax) + '</p></header>' +
     answers + '<p class="notice">AI মূল্যায়ন সহায়ক হিসেবে ব্যবহার করো; চূড়ান্ত পরীক্ষকের সিদ্ধান্তের সঙ্গে নম্বর ভিন্ন হতে পারে।</p>'
