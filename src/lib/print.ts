@@ -60,6 +60,8 @@ export function printCQAnswerPaper(result: ExamResultData) {
     '<section class="q"><div class="q-title">' + escapeHtml(item.questionId) + ' · ' +
     escapeHtml(item.label) + ' <span class="marks">প্রাপ্ত নম্বর: ' + escapeHtml(item.marksAwarded) +
     '/' + escapeHtml(item.maxMarks) + '</span></div>' +
+    (item.question ? '<p><strong>প্রশ্ন:</strong> ' + escapeHtml(item.question) + '</p>' : '') +
+    (item.stimulus ? '<div class="stimulus"><strong>উদ্দীপক</strong><br>' + escapeHtml(item.stimulus) + '</div>' : '') +
     '<div class="answer"><strong>আদর্শ উত্তর / প্রত্যাশিত পয়েন্ট</strong><br>' +
     escapeHtml(item.idealAnswer || "এই অংশের আদর্শ উত্তর তৈরি হয়নি।").replace(/\n/g, "<br>") + '</div>' +
     (item.feedback ? '<p class="feedback"><strong>পরীক্ষকের মন্তব্য:</strong> ' +
