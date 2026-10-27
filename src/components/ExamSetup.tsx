@@ -20,7 +20,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
 }) => {
   const [selectedSubjectId, setSelectedSubjectId] = useState("physics");
   const [selectedPaper, setSelectedPaper] = useState("১ম পত্র");
-  const [selectedChapters, setSelectedChapters] = useState<string[]>(["গতিবিদ্যা"]);
+  const [selectedChapters, setSelectedChapters] = useState<string[]>(["ভৌতজগৎ ও পরিমাপ"]);
   const [customChapter, setCustomChapter] = useState("");
   const [examType, setExamType] = useState<ExamType>("Both");
   const [difficulty, setDifficulty] = useState<ExamDifficulty>("Board standard");
@@ -116,13 +116,13 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
             <div className="flex items-center gap-2 text-xs font-semibold text-indigo-700 tracking-wide uppercase mb-3">
               <span>HSC 2027 Syllabus Standard</span>
               <span aria-hidden="true">·</span>
-              <span>NCTB Board Aligned</span>
+              <span>Subject-specific patterns</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mb-4">
               অধ্যায়ভিত্তিক HSC মডেল টেস্ট ও AI লিখিত মূল্যায়ন ল্যাব
             </h1>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
-              বোর্ড স্ট্যান্ডার্ড বহুনির্বাচনী (MCQ) এবং সৃজনশীল (CQ) প্রশ্নপত্রে নির্ধারিত সময়ে পরীক্ষা দাও। তোমার টাইপ করা কিংবা খাতায় হাতে লেখা উত্তরপত্রের ছবি আপলোড করলে নির্ভুল OCR ও বোর্ড স্ট্যান্ডার্ড মার্কিং রুব্রিকে মূল্যায়ন পাবে।
+              বোর্ড স্ট্যান্ডার্ড বহুনির্বাচনী (MCQ) এবং সৃজনশীল (CQ) প্রশ্নপত্রে নির্ধারিত সময়ে পরীক্ষা দাও। তোমার টাইপ করা কিংবা খাতায় হাতে লেখা উত্তরপত্রের ছবি আপলোড করলে AI সহায়তায় OCR ও মার্কিং রুব্রিক অনুযায়ী মূল্যায়ন পাবে।
             </p>
           </div>
 
@@ -151,9 +151,12 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent flex items-end p-6">
             <p className="text-white text-xs sm:text-sm font-medium">
-              "নিয়মিত অধ্যায়ভিত্তিক মক টেস্ট এবং সৃজনশীল উত্তর পর্যালোচনাই HSC-তে গোল্ডেন A+ নিশ্চিত করে।"
+              "নিয়মিত অধ্যায়ভিত্তিক অনুশীলন, সময় ধরে পরীক্ষা এবং ভুলের বিশ্লেষণে প্রস্তুতি আরও কার্যকর হয়।"
             </p>
           </div>
+          <p className="mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+            সিলেবাসটি প্রস্তুতির জন্য প্রাথমিক তালিকা। HSC 2027-এর চূড়ান্ত অধ্যায় ও মানবণ্টন কলেজ/NCTB-এর সর্বশেষ নির্দেশনার সঙ্গে মিলিয়ে নাও।
+          </p>
         </div>
       </div>
 
