@@ -26,6 +26,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
   onCancel,
 }) => {
   const totalSeconds = (exam.durationMinutes || 30) * 60;
+  const isWrittenTask = /english|বাংলা ২য় পত্র|bangla 2nd paper/i.test((exam.subject || "") + " " + (exam.paper || ""));
   const [secondsRemaining, setSecondsRemaining] = useState(totalSeconds);
   const [activeTab, setActiveTab] = useState<"MCQ" | "CQ">(
     exam.mcqs.length > 0 ? "MCQ" : "CQ"
@@ -295,13 +296,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
               <span>{formatTime(secondsRemaining)}</span>
             </div>
 
-            <button
-              onClick={() => setShowConfirmModal(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl active:scale-[0.98] transition-all flex items-center gap-1.5 shadow-xs"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>সাবমিট</span>
-            </button>
+
           </div>
         </div>
 
@@ -368,7 +363,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <span>সৃজনশীল প্রশ্ন (CQ)</span>
+              <span>{isWrittenTask ? "লিখিত / রচনা" : "সৃজনশীল প্রশ্ন (CQ)"}</span>
               <span className="text-xs opacity-80 tabular-nums">
                 ({answeredCqCount}/{totalCqCount})
               </span>
@@ -560,7 +555,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
                 >
                   <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <span className="text-xs sm:text-sm font-bold text-indigo-700 uppercase tracking-wide">
-                      সৃজনশীল প্রশ্ন {cqIdx + 1}
+                      {isWrittenTask ? "লিখিত প্রশ্ন" : "সৃজনশীল প্রশ্ন"} {cqIdx + 1}
                     </span>
                     <span className="text-xs font-semibold text-slate-500 tabular-nums">
                       মোট নম্বর: ১০
