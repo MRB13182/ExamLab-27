@@ -79,6 +79,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
     try {
       localStorage.setItem(draftKey, JSON.stringify({
         examId: exam.examId,
+        exam,
         mcqAnswers,
         cqAnswers,
         expiresAt: Date.now() + secondsRemaining * 1000,
