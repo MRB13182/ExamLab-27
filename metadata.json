@@ -1,0 +1,6 @@
+{
+  "name": "HSC 2027 AI Exam Lab",
+  "description": "Mobile-first chapter-wise HSC practice exams with CQ/MCQ generation, timer, auto-grading, and answer-sheet evaluation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
