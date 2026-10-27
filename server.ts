@@ -66,8 +66,7 @@ Requirements:
 - Follow the subject-specific question pattern guidance above. Do NOT force the science four-subpart CQ format on English or Bangla 2nd Paper.
 - For science subjects and ICT, normally create a short stimulus and four subparts ক (1 mark), খ (2), গ (3), ঘ (4), total 10, unless the specified pattern says otherwise.
 - For Bangla 1st Paper, build literature-based questions around the selected story, poem, novel or drama; use a short original stimulus/paraphrase and author/theme/character-aware questions. Do not reproduce long copyrighted text.
-- For Bangla 2nd Paper, treat CQ as a requested writing/grammar task (e.g. report, letter, summary, expansion, essay) with task-appropriate subquestions/rubric; no forced science format.
-- For English 1st Paper, use English and produce the selected reading/writing task (comprehension, flow chart, summary, cloze, paragraph, story, email, chart or literary appreciation). For English 2nd Paper, use English grammar/composition task type and task-specific rubric.
+- For Bangla 2nd Paper and English 1st/2nd Paper, represent each requested written task as one subquestion labelled ক worth 10 marks, with the full task instructions in the question field and a task-specific rubric. Use the correct language for the subject and do not force the science four-part format.
 - For Higher Mathematics, prioritize valid derivations and multi-step calculations; don't invent an irrelevant prose stimulus.
 - Supply concise expected answer points / marking rubric for every written subpart or writing task. Ensure the total available marks reflect the chosen format, not a fixed assumption if the task differs.
 - Do not output markdown conversational commentary. Return ONLY valid JSON strictly matching this schema:
@@ -246,10 +245,7 @@ app.post("/api/exam/submit", async (req, res) => {
       const ai = getGemini();
       const gradingPrompt = `You are a fair, precise, experienced Bangladesh HSC Board examiner.
 Evaluate the student's creative answers strictly according to HSC marking standards and the provided questions and rubrics.
-- ক (জ্ঞানমূলক, 1 mark): Direct, precise definition or fact.
-- খ (অনুধাবনমূলক, 2 marks): Conceptual understanding and clear explanation.
-- গ (প্রয়োগমূলক, 3 marks): Proper calculation/application based on the stimulus.
-- ঘ (উচ্চতর দক্ষতামূলক, 4 marks): Logical analysis, synthesis, comparison, or judgment.
+- Follow each question's own rubric and max marks. For standard science CQs, ক is 1 mark, খ 2, গ 3 and ঘ 4. For Bangla/English grammar or composition tasks, use the requested task's marking criteria rather than science subpart rules.
 
 Award partial credit fairly based on correct points. Never exceed the max marks for any subquestion.
 Provide constructive, encouraging feedback in Bengali for each subquestion, pointing out what was good and what was missing, along with a concise model/ideal answer.
