@@ -28,7 +28,9 @@ app.post("/api/exam/generate", async (req, res) => {
     const body = req.body || {};
     const subject = String(body.subject || "ICT").slice(0, 80);
     const paper = String(body.paper || "").slice(0, 80);
-    const chapter = String(body.chapter || "").slice(0, 160);
+    const chapters = Array.isArray(body.chapters) ? body.chapters.map((v: unknown) => String(v).slice(0, 160)).filter(Boolean).slice(0, 20) : [];
+    const chapter = String(body.chapter || chapters.join(" • ") || "").slice(0, 2000);
+    const questionPattern = String(body.questionPattern || "Use the standard HSC question style for this subject and paper.").slice(0, 2500);
     const type = allowedTypes.has(body.type) ? body.type : "Both";
     const difficulty = allowedDifficulty.has(body.difficulty) ? body.difficulty : "Board standard";
     const durationMinutes = Math.min(180, Math.max(5, Number(body.durationMinutes) || 30));
@@ -50,7 +52,8 @@ app.post("/api/exam/generate", async (req, res) => {
     const prompt = `You are an expert Bangladesh HSC ${subject} examiner for HSC 2027 curriculum. Create an original, highly accurate, NCTB syllabus-aligned practice test.
 Subject: ${subject}
 Paper: ${paper || "not specified"}
-Chapter/Topic: ${chapter}
+Chapter/Topics (multiple selection allowed): ${chapter}
+Subject-specific question pattern guidance: ${questionPattern}
 Question Style: ${type}
 Difficulty: ${difficulty}
 Target Duration: ${durationMinutes} minutes
@@ -60,14 +63,13 @@ Requirements:
 - Use clear, standard Bangla for all question texts, math notation, formulas, and explanations (unless English subject).
 - Follow official Bangladesh HSC Board examination question standards.
 - MCQs must have four options (A, B, C, D) and exactly one clear correct answer with concise pedagogical explanation.
-- Creative Questions (CQ) must have:
-  1. An engaging realistic stimulus (উদ্দীপক).
-  2. Four subquestions:
-     - ক (জ্ঞানমূলক, 1 mark)
-     - খ (অনুধাবনমূলক, 2 marks)
-     - গ (প্রয়োগমূলক, 3 marks)
-     - ঘ (উচ্চতর দক্ষতামূলক, 4 marks)
-  3. Detailed expected answer points / rubric for each subpart.
+- Follow the subject-specific question pattern guidance above. Do NOT force the science four-subpart CQ format on English or Bangla 2nd Paper.
+- For science subjects and ICT, normally create a short stimulus and four subparts ক (1 mark), খ (2), গ (3), ঘ (4), total 10, unless the specified pattern says otherwise.
+- For Bangla 1st Paper, build literature-based questions around the selected story, poem, novel or drama; use a short original stimulus/paraphrase and author/theme/character-aware questions. Do not reproduce long copyrighted text.
+- For Bangla 2nd Paper, treat CQ as a requested writing/grammar task (e.g. report, letter, summary, expansion, essay) with task-appropriate subquestions/rubric; no forced science format.
+- For English 1st Paper, use English and produce the selected reading/writing task (comprehension, flow chart, summary, cloze, paragraph, story, email, chart or literary appreciation). For English 2nd Paper, use English grammar/composition task type and task-specific rubric.
+- For Higher Mathematics, prioritize valid derivations and multi-step calculations; don't invent an irrelevant prose stimulus.
+- Supply concise expected answer points / marking rubric for every written subpart or writing task. Ensure the total available marks reflect the chosen format, not a fixed assumption if the task differs.
 - Do not output markdown conversational commentary. Return ONLY valid JSON strictly matching this schema:
 {
   "title": "string",
