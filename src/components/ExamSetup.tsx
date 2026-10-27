@@ -282,7 +282,10 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
                 type="text"
                 placeholder="অথবা নির্দিষ্ট কোনো টপিক বা অধ্যায় লিখো (যেমন: গতিবিদ্যা ও প্রাস)"
                 value={customChapter}
-                onChange={(e) => setCustomChapter(e.target.value)}
+                onChange={(e) => {
+                  setCustomChapter(e.target.value);
+                  if (e.target.value.trim()) setSelectedChapters([]);
+                }}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white text-slate-900"
               />
               {customChapter.trim() && (
