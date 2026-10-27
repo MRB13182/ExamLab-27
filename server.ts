@@ -347,6 +347,10 @@ Return ONLY valid JSON strictly matching this schema:
   }
 });
 
+// Static serving for APK downloads
+app.use("/APK_DOWNLOAD", express.static(path.resolve(__dirname, "APK_DOWNLOAD")));
+app.use("/.build-outputs", express.static(path.resolve(__dirname, ".build-outputs")));
+
 // Vite middleware & Static Serving setup
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
