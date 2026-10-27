@@ -6,6 +6,7 @@ import { ExamResult } from "./components/ExamResult";
 import { HistoryModal } from "./components/HistoryModal";
 import { GuidelineModal } from "./components/GuidelineModal";
 import { PublicExam, ExamResultData, ExamHistoryRecord } from "./types";
+import { HSC_SUBJECTS } from "./data/hscSyllabus";
 
 const HISTORY_STORAGE_KEY = "hsc_2027_exam_history";
 
@@ -57,6 +58,26 @@ export default function App() {
       }
       return updated;
     });
+  };
+
+  const handleExportData = () => {
+    const keys = Object.keys(localStorage);
+    const localData = Object.fromEntries(keys.map((key) => [key, localStorage.getItem(key)]));
+    const payload = {
+      app: "HSC 2027 AI Exam Lab",
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      syllabus: HSC_SUBJECTS,
+      history,
+      localStorage: localData,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "hsc-2027-examlab-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleClearHistory = () => {
@@ -114,6 +135,7 @@ export default function App() {
         onOpenGuidelines={() => setIsGuidelinesOpen(true)}
         historyCount={history.length}
         isInExam={view === "EXAM"}
+        onExportData={handleExportData}
       />
 
       {/* Main View Area */}
