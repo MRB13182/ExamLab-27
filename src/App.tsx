@@ -21,15 +21,21 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
-  // Load history from localStorage
+  // Load history and restore an unfinished local exam after refresh.
   useEffect(() => {
     try {
       const stored = localStorage.getItem(HISTORY_STORAGE_KEY);
-      if (stored) {
-        setHistory(JSON.parse(stored));
+      if (stored) setHistory(JSON.parse(stored));
+      const draftKey = Object.keys(localStorage).find((key) => key.startsWith("hsc_2027_active_exam_"));
+      if (draftKey) {
+        const draft = JSON.parse(localStorage.getItem(draftKey) || "null");
+        if (draft?.exam?.examId) {
+          setCurrentExam(draft.exam);
+          setView("EXAM");
+        }
       }
     } catch (e) {
-      console.error("Failed to load history from localStorage:", e);
+      console.error("Failed to restore local exam data:", e);
     }
   }, []);
 
