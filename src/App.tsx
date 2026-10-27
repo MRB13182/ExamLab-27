@@ -120,6 +120,9 @@ export default function App() {
   };
 
   const handleNewExam = () => {
+    try {
+      Object.keys(localStorage).filter((key) => key.startsWith("hsc_2027_active_exam_")).forEach((key) => localStorage.removeItem(key));
+    } catch {}
     setCurrentExam(null);
     setExamResult(null);
     setView("SETUP");
