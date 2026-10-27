@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, History, Award, Sparkles } from "lucide-react";
+import { BookOpen, History, Award, Sparkles, Download } from "lucide-react";
 
 interface NavbarProps {
   onGoHome: () => void;
@@ -7,6 +7,7 @@ interface NavbarProps {
   onOpenGuidelines: () => void;
   historyCount: number;
   isInExam?: boolean;
+  onExportData: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -15,6 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenGuidelines,
   historyCount,
   isInExam,
+  onExportData,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
@@ -68,6 +70,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Zone 3: Primary Action */}
         <div className="flex items-center gap-2.5">
+          <button onClick={onExportData} title="সব পরীক্ষার ডেটা JSON হিসেবে ডাউনলোড" aria-label="সব ডেটা ডাউনলোড" className="p-2 rounded-xl text-indigo-700 border border-indigo-100 hover:bg-indigo-50">
+            <Download className="w-5 h-5" />
+          </button>
           <button
             onClick={onOpenHistory}
             className="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
