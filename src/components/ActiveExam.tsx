@@ -27,7 +27,6 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
 }) => {
   const totalSeconds = (exam.durationMinutes || 30) * 60;
   const isWrittenTask = /english|বাংলা ২য় পত্র|bangla 2nd paper/i.test((exam.subject || "") + " " + (exam.paper || ""));
-  const isWrittenTask = /english|বাংলা ২য় পত্র|bangla 2nd paper/i.test((exam.subject || "") + " " + (exam.paper || ""));
   const [secondsRemaining, setSecondsRemaining] = useState(totalSeconds);
   const [activeTab, setActiveTab] = useState<"MCQ" | "CQ">(
     exam.mcqs.length > 0 ? "MCQ" : "CQ"
