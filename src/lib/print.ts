@@ -33,16 +33,18 @@ export function printCQQuestionPaper(exam: PublicExam) {
     window.alert("এই পরীক্ষায় সৃজনশীল/লিখিত প্রশ্ন নেই।");
     return;
   }
+  const isWrittenTask = /english|বাংলা ২য় পত্র|bangla 2nd paper/i.test((exam.subject || "") + " " + (exam.paper || ""));
+  const questionHeading = isWrittenTask ? "লিখিত প্রশ্ন" : "সৃজনশীল প্রশ্ন";
   const questions = exam.cqs.map((cq, index) =>
-    '<section class="q"><div class="q-title">সৃজনশীল প্রশ্ন ' + (index + 1) + ' · ১০ নম্বর</div>' +
+    '<section class="q"><div class="q-title">' + questionHeading + ' ' + (index + 1) + ' · ১০ নম্বর</div>' +
     '<div class="stimulus"><strong>উদ্দীপক</strong><br>' + escapeHtml(cq.stimulus) + '</div>' +
     (cq.subquestions || []).map((sub) =>
       '<div class="sub"><strong>' + escapeHtml(sub.label) + '.</strong> ' + escapeHtml(sub.question) +
       ' <span class="marks">(' + escapeHtml(sub.marks) + ' নম্বর)</span></div>'
     ).join("") + '</section>'
   ).join("");
-  openA4("CQ Question Paper — " + exam.title,
-    '<header class="head"><h1>সৃজনশীল প্রশ্নপত্র</h1><p>' + escapeHtml(exam.title) + '</p><p>' +
+  openA4((isWrittenTask ? "Written Practice — " : "CQ Question Paper — ") + exam.title,
+    '<header class="head"><h1>' + (isWrittenTask ? "লিখিত প্রশ্নপত্র" : "সৃজনশীল প্রশ্নপত্র") + '</h1><p>' + escapeHtml(exam.title) + '</p><p>'
     escapeHtml(exam.subject) + ' · ' + escapeHtml(exam.paper) + '</p><p>অধ্যায়: ' + escapeHtml(exam.chapter) +
     ' · সময়: ' + escapeHtml(exam.durationMinutes) + ' মিনিট</p></header>' +
     '<div class="student"><span>শিক্ষার্থীর নাম: __________________</span><span>তারিখ: ______________</span></div>' +
@@ -56,6 +58,7 @@ export function printCQAnswerPaper(result: ExamResultData) {
     window.alert("এই ফলাফলে কোনো CQ/লিখিত মূল্যায়ন পাওয়া যায়নি।");
     return;
   }
+  const isWrittenTask = /english|বাংলা ২য় পত্র|bangla 2nd paper/i.test((result.subject || "") + " " + (result.title || ""));
   const answers = items.map((item, index) =>
     '<section class="q"><div class="q-title">' + escapeHtml(item.questionId) + ' · ' +
     escapeHtml(item.label) + ' <span class="marks">প্রাপ্ত নম্বর: ' + escapeHtml(item.marksAwarded) +
@@ -67,8 +70,8 @@ export function printCQAnswerPaper(result: ExamResultData) {
     (item.feedback ? '<p class="feedback"><strong>পরীক্ষকের মন্তব্য:</strong> ' +
     escapeHtml(item.feedback).replace(/\n/g, "<br>") + '</p>' : '') + '</section>'
   ).join("");
-  openA4("CQ Answer Sheet — " + result.title,
-    '<header class="head"><h1>সৃজনশীল উত্তর ও মূল্যায়ন</h1><p>' + escapeHtml(result.title) + '</p><p>' +
+  openA4((isWrittenTask ? "Written Answer — " : "CQ Answer Sheet — ") + result.title,
+    '<header class="head"><h1>' + (isWrittenTask ? "লিখিত উত্তর ও মূল্যায়ন" : "সৃজনশীল উত্তর ও মূল্যায়ন") + '</h1><p>' + escapeHtml(result.title) + '</p><p>'
     escapeHtml(result.subject) + ' · ' + escapeHtml(result.chapter) + '</p><p>CQ নম্বর: ' +
     escapeHtml(result.cqScore) + '/' + escapeHtml(result.cqMax) + '</p></header>' +
     answers + '<p class="notice">AI মূল্যায়ন সহায়ক হিসেবে ব্যবহার করো; চূড়ান্ত পরীক্ষকের সিদ্ধান্তের সঙ্গে নম্বর ভিন্ন হতে পারে।</p>'
