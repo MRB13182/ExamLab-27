@@ -67,6 +67,8 @@ export interface CQEvaluationItem {
   maxMarks: number;
   feedback: string;
   idealAnswer: string;
+  question?: string;
+  stimulus?: string;
 }
 
 export interface ExamResultData {
