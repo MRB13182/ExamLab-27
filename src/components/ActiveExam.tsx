@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PublicExam, ExamResultData } from "../types";
+import { printCQQuestionPaper } from "../lib/print";
 import {
   Clock,
   CheckCircle2,
@@ -9,7 +10,8 @@ import {
   X,
   Bookmark,
   Send,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from "lucide-react";
 
 interface ActiveExamProps {
@@ -48,8 +50,44 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [timeWarning, setTimeWarning] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const submissionStartedRef = useRef(false);
+  const draftKey = "hsc_2027_active_exam_" + exam.examId;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore the local draft and original deadline after refresh.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.mcqAnswers && typeof saved.mcqAnswers === "object") setMcqAnswers(saved.mcqAnswers);
+        if (saved.cqAnswers && typeof saved.cqAnswers === "object") setCqAnswers(saved.cqAnswers);
+        if (typeof saved.expiresAt === "number") setSecondsRemaining(Math.max(0, Math.ceil((saved.expiresAt - Date.now()) / 1000)));
+      }
+    } catch (error) {
+      console.warn("Could not restore exam draft", error);
+    } finally {
+      setDraftReady(true);
+    }
+  }, [draftKey]);
+
+  // Keep responses and deadline on this device only.
+  useEffect(() => {
+    if (!draftReady || submissionStartedRef.current) return;
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        examId: exam.examId,
+        mcqAnswers,
+        cqAnswers,
+        expiresAt: Date.now() + secondsRemaining * 1000,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch (error) {
+      console.warn("Could not save exam draft locally", error);
+    }
+  }, [draftReady, draftKey, exam.examId, mcqAnswers, cqAnswers, secondsRemaining]);
 
   // Countdown Timer
   useEffect(() => {
@@ -148,6 +186,8 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
 
   // Submit Exam API Call
   const executeSubmission = async () => {
+    if (submissionStartedRef.current) return;
+    submissionStartedRef.current = true;
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -188,6 +228,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
       }
 
       const timeTaken = totalSeconds - secondsRemaining;
+      try { localStorage.removeItem(draftKey); } catch {}
       onSubmitted({
         ...data.result,
         timeTakenSeconds: timeTaken,
@@ -195,6 +236,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
     } catch (err: any) {
       console.error("Submission error:", err);
       setSubmitError(err.message || "সাবমিট করতে সমস্যা হয়েছে। সংযোগ পরীক্ষা করে আবার ক্লিক করো।");
+      submissionStartedRef.current = false;
       setIsSubmitting(false);
       setShowConfirmModal(false);
     }
@@ -229,7 +271,18 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
           </div>
 
           {/* Countdown Timer */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            {exam.cqs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => printCQQuestionPaper(exam)}
+                title="CQ প্রশ্নপত্র A4 PDF"
+                aria-label="CQ প্রশ্নপত্র PDF"
+                className="p-2 rounded-xl border border-slate-200 text-indigo-700 hover:bg-indigo-50 print:hidden"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+            )}
             <div
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-mono text-sm sm:text-base font-bold transition-all tabular-nums ${
                 secondsRemaining <= 180
