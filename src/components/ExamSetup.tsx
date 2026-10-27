@@ -154,11 +154,11 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
               "নিয়মিত অধ্যায়ভিত্তিক অনুশীলন, সময় ধরে পরীক্ষা এবং ভুলের বিশ্লেষণে প্রস্তুতি আরও কার্যকর হয়।"
             </p>
           </div>
-          <p className="mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-            সিলেবাসটি প্রস্তুতির জন্য প্রাথমিক তালিকা। HSC 2027-এর চূড়ান্ত অধ্যায় ও মানবণ্টন কলেজ/NCTB-এর সর্বশেষ নির্দেশনার সঙ্গে মিলিয়ে নাও।
-          </p>
         </div>
       </div>
+      <p className="mb-6 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+        সিলেবাসটি প্রস্তুতির জন্য প্রাথমিক তালিকা। HSC 2027-এর চূড়ান্ত অধ্যায় ও মানবণ্টন কলেজ/NCTB-এর সর্বশেষ নির্দেশনার সঙ্গে মিলিয়ে নাও।
+      </p>
 
       {/* Main Configuration Card */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
