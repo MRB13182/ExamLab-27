@@ -20,7 +20,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
 }) => {
   const [selectedSubjectId, setSelectedSubjectId] = useState("physics");
   const [selectedPaper, setSelectedPaper] = useState("১ম পত্র");
-  const [selectedChapter, setSelectedChapter] = useState("গতিবিদ্যা");
+  const [selectedChapters, setSelectedChapters] = useState<string[]>(["গতিবিদ্যা"]);
   const [customChapter, setCustomChapter] = useState("");
   const [examType, setExamType] = useState<ExamType>("Both");
   const [difficulty, setDifficulty] = useState<ExamDifficulty>("Board standard");
@@ -38,18 +38,18 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
     const defaultPaper = sub.papers[0];
     setSelectedPaper(defaultPaper);
     const chapters = sub.chapters[defaultPaper] || [];
-    setSelectedChapter(chapters[0] || "");
+    setSelectedChapters(chapters.length ? [chapters[0]] : []);
     setCustomChapter("");
   };
 
   const handlePaperChange = (paper: string) => {
     setSelectedPaper(paper);
     const chapters = currentSubject.chapters[paper] || [];
-    setSelectedChapter(chapters[0] || "");
+    setSelectedChapters(chapters.length ? [chapters[0]] : []);
     setCustomChapter("");
   };
 
-  const activeChapterName = customChapter.trim() || selectedChapter;
+  const activeChapterName = customChapter.trim() || selectedChapters.join(" • ");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +78,8 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
           subject: `${currentSubject.name} (${currentSubject.nameEn})`,
           paper: selectedPaper,
           chapter: activeChapterName,
+          chapters: customChapter.trim() ? [customChapter.trim()] : selectedChapters,
+          questionPattern: currentSubject.questionPattern || "Use standard HSC question style for this subject and paper.",
           type: examType,
           difficulty,
           durationMinutes,
@@ -244,19 +246,19 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
                 ৩. অধ্যায় / পাঠ্যসূচি
               </label>
-              <span className="text-xs text-slate-400">বা নিচের পছন্দের অধ্যায়ে ক্লিক করো</span>
+              <span className="text-xs text-slate-400">{selectedChapters.length}টি অধ্যায় নির্বাচিত · একাধিক বাছাই করা যাবে</span>
             </div>
 
             {/* Quick Presets */}
             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
               {availableChapters.map((ch) => {
-                const isSelected = selectedChapter === ch && !customChapter.trim();
+                const isSelected = selectedChapters.includes(ch) && !customChapter.trim();
                 return (
                   <button
                     key={ch}
                     type="button"
                     onClick={() => {
-                      setSelectedChapter(ch);
+                      setSelectedChapters((prev) => prev.includes(ch) ? prev.filter((item) => item !== ch) : [...prev, ch]);
                       setCustomChapter("");
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
