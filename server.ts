@@ -299,7 +299,11 @@ Return ONLY valid JSON strictly matching this schema:
         const parsed = parseJson(textOutput);
         if (parsed && typeof parsed === "object") {
           cqEvaluation = {
-            items: Array.isArray(parsed.items) ? parsed.items : [],
+            items: Array.isArray(parsed.items) ? parsed.items.map((item: any) => {
+              const cq = exam.cqs.find((candidate: any) => candidate.id === item.questionId);
+              const sub = cq?.subquestions?.find((candidate: any) => candidate.label === item.label);
+              return { ...item, question: item.question || sub?.question || "", stimulus: item.stimulus || cq?.stimulus || "" };
+            }) : [],
             score: Number(parsed.score) || 0,
             maxScore: Number(parsed.maxScore) || cqMax,
             feedback: parsed.feedback || "সৃজনশীল প্রশ্নের উত্তর মূল্যায়ন সম্পন্ন হয়েছে।",
