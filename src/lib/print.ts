@@ -7,13 +7,22 @@ const escapeHtml = (value: unknown) => String(value ?? "")
 const css = `
   *{box-sizing:border-box}
   body{font-family:"Noto Sans Bengali","Nirmala UI","SolaimanLipi",Arial,sans-serif;color:#172033;font-size:12pt;line-height:1.65;margin:0;background:#fff}
-  .pdf-page{position:relative;width:100%;background:white;padding:12mm 13mm;color:#172033}
-  .brand{font-size:9pt;color:#4f46e5;font-weight:700;text-align:right;border-bottom:1px solid #cbd5e1;padding-bottom:6px;margin-bottom:12px}
-  .head{text-align:center;border-bottom:2px solid #334155;padding-bottom:12px;margin-bottom:18px}
-  .head h1{font-size:19pt;margin:0 0 5px}.head p{font-size:10pt;color:#475569;margin:2px 0}
+  .pdf-page{position:relative;width:100%;background:#fff;padding:8mm 12mm 12mm;color:#172033;overflow:hidden}
+  .brandbar{display:flex;align-items:center;gap:10px;padding:0 0 8px;margin:0 0 12px;border-bottom:2px solid #2563eb;position:relative;z-index:2}
+  .brand-logo{width:42px;height:42px;flex:0 0 42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:linear-gradient(145deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe}
+  .brand-logo svg{width:32px;height:32px;display:block}
+  .brand-copy{display:flex;flex-direction:column;line-height:1.15}
+  .brand-name{font-size:14pt;font-weight:900;letter-spacing:-.2px;color:#0f2b55}
+  .brand-name span{color:#2563eb}
+  .brand-tagline{font-size:7.5pt;color:#2563eb;font-style:italic;margin-top:4px}
+  .brand-note{margin-left:auto;text-align:right;font-size:7.5pt;line-height:1.35;color:#1d4ed8;font-weight:700;max-width:95px}
+  .head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:12px;margin-bottom:18px;position:relative}
+  .head h1{font-size:19pt;margin:0 0 5px;color:#0f2b55}.head p{font-size:10pt;color:#475569;margin:2px 0}
+  .head:after{content:"HSC 2027 AI Exam Lab";position:absolute;left:7%;top:42%;width:86%;text-align:center;font-size:22pt;font-weight:900;color:rgba(37,99,235,.055);transform:rotate(-28deg);pointer-events:none;z-index:0}
+  .head>*{position:relative;z-index:1}
   .student{display:flex;gap:18px;flex-wrap:wrap;font-size:10pt;margin:12px 0 20px}
   .q{position:relative;margin:0 0 20px;page-break-inside:avoid;break-inside:avoid;padding:4px 0}
-  .q:after{content:"HSC 2027 AI Exam Lab";position:absolute;left:8%;top:42%;width:84%;text-align:center;font-size:26pt;font-weight:800;color:rgba(79,70,229,.065);transform:rotate(-28deg);pointer-events:none;z-index:0}
+  .q:after{content:"HSC 2027 AI Exam Lab";position:absolute;left:8%;top:42%;width:84%;text-align:center;font-size:22pt;font-weight:800;color:rgba(37,99,235,.055);transform:rotate(-28deg);pointer-events:none;z-index:0}
   .q>*{position:relative;z-index:1}
   .q-title{font-weight:800;margin-bottom:7px}.stimulus{border:1px solid #cbd5e1;border-radius:5px;padding:10px;margin:8px 0 10px}
   .sub{margin:7px 0}.marks{font-size:9pt;color:#475569;white-space:nowrap}
@@ -37,7 +46,8 @@ async function saveA4Pdf(title: string, inner: string, filename: string) {
     host.style.width = "794px";
     host.style.background = "#ffffff";
     host.style.zIndex = "-1";
-    host.innerHTML = '<style>' + css + '</style><article class="pdf-page"><div class="brand">HSC 2027 AI Exam Lab</div>' + inner +
+    host.innerHTML = '<style>' + css + '</style><article class="pdf-page">' +
+      '<div class="brandbar"><div class="brand-logo" aria-hidden="true"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M4 20 32 7l28 13-28 13L4 20Z" fill="#2563eb"/><path d="M15 26v14c10 8 24 8 34 0V26L32 35 15 26Z" fill="#1d4ed8"/><path d="M57 22v17" stroke="#0f2b55" stroke-width="3" stroke-linecap="round"/><circle cx="57" cy="42" r="3.5" fill="#f59e0b"/><path d="M27 39h10v6H27z" fill="#93c5fd"/></svg></div><div class="brand-copy"><div class="brand-name">HSC 2027 <span>AI Exam Lab</span></div><div class="brand-tagline">Practice Smart. Score Higher.</div></div><div class="brand-note">Better Practice<br>Brighter Results</div></div>' + inner +
       '<div class="footer">HSC 2027 AI Exam Lab · ব্যক্তিগত অনুশীলনপত্র · ' + escapeHtml(new Date().toLocaleString("bn-BD")) + '</div></article>';
     document.body.appendChild(host);
     await new Promise(resolve => setTimeout(resolve, 180));
