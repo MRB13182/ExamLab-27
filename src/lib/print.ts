@@ -30,7 +30,9 @@ const css = `
   .feedback{font-size:10pt;color:#475569}.footer{margin-top:24px;border-top:1px solid #cbd5e1;padding-top:7px;font-size:9pt;color:#64748b;text-align:center}
   .notice{font-size:9pt;color:#64748b;margin-top:12px}.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
   .metric{border:1px solid #dbe3ee;border-radius:7px;padding:8px}.metric b{display:block;font-size:9pt;color:#64748b}.metric strong{font-size:17pt}
-  .mcq{border-bottom:1px solid #dbe3ee;padding:10px 0;break-inside:avoid}.correct{color:#047857}.wrong{color:#be123c}
+  .mcq{position:relative;border-bottom:1px solid #dbe3ee;padding:10px 0;break-inside:avoid}
+  .mcq:after{content:"HSC 2027 AI Exam Lab";position:absolute;left:10%;top:40%;width:80%;text-align:center;font-size:17pt;font-weight:900;color:rgba(37,99,235,.045);transform:rotate(-28deg);pointer-events:none;z-index:0}
+  .mcq>*{position:relative;z-index:1}.correct{color:#047857}.wrong{color:#be123c}
 `;
 
 async function saveA4Pdf(title: string, inner: string, filename: string) {
