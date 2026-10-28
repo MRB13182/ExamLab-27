@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ExamResultData } from "../types";
-import { printCQAnswerPaper } from "../lib/print";
+import { downloadFullResultPdf, printCQAnswerPaper } from "../lib/print";
 import {
   CheckCircle2,
   XCircle,
@@ -85,7 +85,8 @@ export const ExamResult: React.FC<ExamResultProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button type="button" onClick={() => downloadFullResultPdf(result)} className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition-colors print:hidden"><FileCheck2 className="w-4 h-4" /><span>সম্পূর্ণ Result PDF</span></button>
             {result.cqEvaluation?.items?.length > 0 && (
               <button
                 onClick={() => printCQAnswerPaper(result)}
