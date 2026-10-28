@@ -19,9 +19,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         <button onClick={onGoHome} disabled={isInExam} className="flex items-center gap-2.5 text-left group rounded-lg p-1 disabled:opacity-50">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
-            <BookOpen className="w-5 h-5" />
-          </div>
+          <img
+            src="/logo-favicon.png"
+            alt="HSC 2027 AI Exam Lab Logo"
+            className="w-9 h-9 rounded-xl object-contain shadow-xs bg-indigo-50/50 p-0.5 border border-slate-100"
+          />
           <div>
             <span className="text-base sm:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap block">HSC 2027 AI Exam Lab</span>
             <span className="hidden sm:block text-[10px] text-slate-500">Practice Smart · Score Higher</span>

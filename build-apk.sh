@@ -50,14 +50,17 @@ cat << 'EOF' > "$ANDROID_BUILD_DIR/res/layout/activity_main.xml"
 </FrameLayout>
 EOF
 
-# Generate launcher icons from banner
-BANNER_IMG="/app/applet/src/assets/images/hsc_lab_hero_banner_1793111324035.jpg"
-if [ -f "$BANNER_IMG" ]; then
-    convert "$BANNER_IMG" -resize 48x48 "$ANDROID_BUILD_DIR/res/mipmap-mdpi/ic_launcher.png"
-    convert "$BANNER_IMG" -resize 72x72 "$ANDROID_BUILD_DIR/res/mipmap-hdpi/ic_launcher.png"
-    convert "$BANNER_IMG" -resize 96x96 "$ANDROID_BUILD_DIR/res/mipmap-xhdpi/ic_launcher.png"
-    convert "$BANNER_IMG" -resize 144x144 "$ANDROID_BUILD_DIR/res/mipmap-xxhdpi/ic_launcher.png"
-    convert "$BANNER_IMG" -resize 192x192 "$ANDROID_BUILD_DIR/res/mipmap-xxxhdpi/ic_launcher.png"
+# Generate launcher icons from logo
+LOGO_IMG="/app/applet/logo-favicon.png"
+if [ ! -f "$LOGO_IMG" ]; then
+    LOGO_IMG="/app/applet/src/assets/images/hsc_lab_hero_banner_1793111324035.jpg"
+fi
+if [ -f "$LOGO_IMG" ]; then
+    convert "$LOGO_IMG" -resize 48x48 "$ANDROID_BUILD_DIR/res/mipmap-mdpi/ic_launcher.png"
+    convert "$LOGO_IMG" -resize 72x72 "$ANDROID_BUILD_DIR/res/mipmap-hdpi/ic_launcher.png"
+    convert "$LOGO_IMG" -resize 96x96 "$ANDROID_BUILD_DIR/res/mipmap-xhdpi/ic_launcher.png"
+    convert "$LOGO_IMG" -resize 144x144 "$ANDROID_BUILD_DIR/res/mipmap-xxhdpi/ic_launcher.png"
+    convert "$LOGO_IMG" -resize 192x192 "$ANDROID_BUILD_DIR/res/mipmap-xxxhdpi/ic_launcher.png"
 fi
 
 cat << 'EOF' > "$ANDROID_BUILD_DIR/AndroidManifest.xml"
