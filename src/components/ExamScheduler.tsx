@@ -37,9 +37,8 @@ export const ExamScheduler: React.FC = () => {
   const [subject, setSubject] = useState("Biology");
   const [chapter, setChapter] = useState("");
   const [startsAt, setStartsAt] = useState("");
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
-    "Notification" in window ? Notification.permission : "unsupported"
-  );
+  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
+  useEffect(() => { setPermission("Notification" in window ? Notification.permission : "unsupported"); }, []);
   const [notice, setNotice] = useState("");
 
   useEffect(() => { setScheduled(readScheduled()); }, []);
