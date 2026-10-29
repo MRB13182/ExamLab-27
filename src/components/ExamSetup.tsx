@@ -137,58 +137,12 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-      {/* Hero Visual & Intro Strip */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch mb-8 sm:mb-12">
-        <div className="lg:col-span-7 flex flex-col justify-between bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-700 tracking-wide uppercase mb-3">
-              <span>HSC 2027 Syllabus Standard</span>
-              <span aria-hidden="true">·</span>
-              <span>Subject-specific patterns</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mb-4">
-              অধ্যায়ভিত্তিক HSC মডেল টেস্ট ও AI লিখিত মূল্যায়ন ল্যাব
-            </h1>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
-              বোর্ড স্ট্যান্ডার্ড বহুনির্বাচনী (MCQ) এবং সৃজনশীল (CQ) প্রশ্নপত্রে নির্ধারিত সময়ে পরীক্ষা দাও। তোমার টাইপ করা কিংবা খাতায় হাতে লেখা উত্তরপত্রের ছবি আপলোড করলে AI সহায়তায় OCR ও মার্কিং রুব্রিক অনুযায়ী মূল্যায়ন পাবে।
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-6 mt-6 border-t border-slate-100">
-            <div className="bg-slate-50 rounded-2xl p-3 sm:p-4 text-center">
-              <span className="block text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">৪ স্তরের CQ</span>
-              <span className="text-xs text-slate-500 mt-1 block">ক, খ, গ, ঘ রুব্রিক</span>
-            </div>
-            <div className="bg-slate-50 rounded-2xl p-3 sm:p-4 text-center">
-              <span className="block text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">হাতে লেখা OCR</span>
-              <span className="text-xs text-slate-500 mt-1 block">খাতার ছবি পরীক্ষণ</span>
-            </div>
-            <div className="bg-slate-50 rounded-2xl p-3 sm:p-4 text-center">
-              <span className="block text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">বোর্ড নম্বর</span>
-              <span className="text-xs text-slate-500 mt-1 block">ব্যাখ্যাসহ সঠিক উত্তর</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-5 relative rounded-3xl overflow-hidden min-h-[220px] sm:min-h-[280px] border border-slate-200">
-          <img
-            src="/src/assets/images/hsc_lab_hero_banner_1793111324035.jpg"
-            alt="Bangladeshi student preparing for HSC exams"
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent flex items-end p-6">
-            <p className="text-white text-xs sm:text-sm font-medium">
-              "নিয়মিত অধ্যায়ভিত্তিক অনুশীলন, সময় ধরে পরীক্ষা এবং ভুলের বিশ্লেষণে প্রস্তুতি আরও কার্যকর হয়।"
-            </p>
-          </div>
-        </div>
+    <div className="mx-auto w-full max-w-5xl px-0 py-2">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><p className="text-xs font-bold text-blue-700">MCQ</p><p className="mt-1 text-lg font-extrabold text-slate-900">১ মিনিট / প্রশ্ন</p><p className="mt-1 text-xs text-slate-600">সঠিক উত্তর ও ব্যাখ্যাসহ</p></div>
+        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><p className="text-xs font-bold text-violet-700">CQ / লিখিত</p><p className="mt-1 text-lg font-extrabold text-slate-900">২০ মিনিট / প্রশ্ন</p><p className="mt-1 text-xs text-slate-600">রুব্রিকভিত্তিক মূল্যায়ন</p></div>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"><p className="text-xs font-bold text-emerald-700">শেষে</p><p className="mt-1 text-lg font-extrabold text-slate-900">রেজাল্ট + PDF</p><p className="mt-1 text-xs text-slate-600">সময় শেষ হলে অটো সাবমিট</p></div>
       </div>
-      <p className="mb-6 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-        সিলেবাসটি প্রস্তুতির জন্য প্রাথমিক তালিকা। HSC 2027-এর চূড়ান্ত অধ্যায় ও মানবণ্টন কলেজ/NCTB-এর সর্বশেষ নির্দেশনার সঙ্গে মিলিয়ে নাও।
-      </p>
-
       {/* Main Configuration Card */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
