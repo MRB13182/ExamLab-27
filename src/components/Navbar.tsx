@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { History, Award, Sparkles, Download, Menu, Smartphone } from "lucide-react";
+import { History, Award, Sparkles, Download, Menu, Smartphone, Upload } from "lucide-react";
 
 const DEBUG_APK_URL = "https://github.com/MRB13182/ExamLab-27/raw/refs/heads/main/APK_DOWNLOAD/app-debug.apk";
 
@@ -10,10 +10,11 @@ interface NavbarProps {
   historyCount: number;
   isInExam?: boolean;
   onExportData: () => void;
+  onImportData: (file: File) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  onGoHome, onOpenHistory, onOpenGuidelines, historyCount, isInExam, onExportData,
+  onGoHome, onOpenHistory, onOpenGuidelines, historyCount, isInExam, onExportData, onImportData,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -37,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button onClick={onOpenGuidelines} className="flex items-center gap-1.5 hover:text-slate-900"><Award className="w-4 h-4 text-slate-400"/>নির্দেশিকা</button>
           <a href={DEBUG_APK_URL} download="HSC-2027-AI-Exam-Lab-debug.apk" title="Android APK ডাউনলোড" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-indigo-700 border border-indigo-100 hover:bg-indigo-50 whitespace-nowrap"><Smartphone className="w-4 h-4"/><span>APK ডাউনলোড</span></a>
           <button onClick={onExportData} title="সব ডেটা ব্যাকআপ ডাউনলোড" className="p-2 rounded-xl text-indigo-700 border border-indigo-100 hover:bg-indigo-50"><Download className="w-5 h-5"/></button>
+          <label title="JSON backup restore" className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50"><Upload className="w-4 h-4"/><span>Restore</span><input type="file" accept="application/json,.json" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onImportData(file); event.currentTarget.value = ""; }}/></label>
         </nav>
         <div className="relative flex items-center gap-2">
           <button onClick={onGoHome} disabled={isInExam} className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-40 shadow-sm whitespace-nowrap">
@@ -51,6 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button onClick={() => { onOpenGuidelines(); closeMenu(); }} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Award className="w-4 h-4"/>নির্দেশিকা</button>
               <a href={DEBUG_APK_URL} download="HSC-2027-AI-Exam-Lab-debug.apk" onClick={closeMenu} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-indigo-700"><Smartphone className="w-4 h-4"/>APK ডাউনলোড</a>
               <button onClick={() => { onExportData(); closeMenu(); }} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Download className="w-4 h-4"/>সব ডেটা ব্যাকআপ</button>
+              <label className="cursor-pointer rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Upload className="w-4 h-4"/>Backup Restore<input type="file" accept="application/json,.json" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onImportData(file); closeMenu(); event.currentTarget.value = ""; }}/></label>
             </div>
           )}
         </div>
