@@ -16,6 +16,7 @@ import { ChapterSelectorModal } from "./components/ChapterSelectorModal";
 import { SearchModal } from "./components/SearchModal";
 import { HistoryModal } from "./components/HistoryModal";
 import { GuidelineModal } from "./components/GuidelineModal";
+import { MistakeBookModal } from "./components/MistakeBookModal";
 import { PublicExam, ExamResultData, ExamHistoryRecord, ExamType } from "./types";
 import { HSC_SUBJECTS } from "./data/hscSyllabus";
 import { BoardQuestionSet } from "./data/boardQuestions";
@@ -49,6 +50,7 @@ export default function App() {
   const [isRevisionNotesOpen, setIsRevisionNotesOpen] = useState(false);
   const [isChapterSelectorOpen, setIsChapterSelectorOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMistakeBookOpen, setIsMistakeBookOpen] = useState(false);
   const setupSectionRef = useRef<HTMLDivElement>(null);
 
   const navigateView = (next: AppView, replace = false) => {
@@ -330,6 +332,7 @@ export default function App() {
               onOpenBoardQuestions={() => setIsBoardQuestionsOpen(true)}
               onOpenHistory={() => setIsHistoryOpen(true)}
               onOpenRevisionNotes={() => setIsRevisionNotesOpen(true)}
+              onOpenMistakes={() => setIsMistakeBookOpen(true)}
               onExportData={handleExportData}
               onImportData={handleImportData}
             />
@@ -383,6 +386,7 @@ export default function App() {
         onOpenNotes={() => { setIsSearchOpen(false); setIsRevisionNotesOpen(true); }}
         onOpenBoardQuestions={() => { setIsSearchOpen(false); setIsBoardQuestionsOpen(true); }}
       />
+      <MistakeBookModal isOpen={isMistakeBookOpen} onClose={() => setIsMistakeBookOpen(false)} history={history} onOpenResult={handleSelectRecord} />
       <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} history={history} onSelectRecord={handleSelectRecord} onClearHistory={handleClearHistory} />
       <GuidelineModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
     </div>
