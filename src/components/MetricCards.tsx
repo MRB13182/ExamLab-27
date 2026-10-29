@@ -7,117 +7,57 @@ interface MetricCardsProps {
 }
 
 export const MetricCards: React.FC<MetricCardsProps> = ({ history }) => {
-  // Aggregate real stats from user history
-  const historyExams = history.length;
-  const historyQuestions = history.reduce((sum, h) => sum + (h.result?.totalMax || 0), 0);
-  const historyTimeSeconds = history.reduce((sum, h) => sum + (h.result?.timeTakenSeconds || 0), 0);
-  const avgScore = historyExams > 0
-    ? Math.round(history.reduce((sum, h) => sum + (h.percentage || 0), 0) / historyExams)
-    : 78;
-
-  const bestRecord = history.reduce<{ score: number; max: number; subject: string } | null>((best, h) => {
-    if (!best || (h.percentage > (best.score / best.max) * 100)) {
-      return { score: h.score, max: h.maxScore, subject: h.subject || "পদার্থবিজ্ঞান" };
-    }
+  const totalExams = history.length;
+  const totalQuestions = history.reduce((sum, item) => sum + (item.result?.totalMax || 0), 0);
+  const totalSeconds = history.reduce((sum, item) => sum + Math.max(0, item.result?.timeTakenSeconds || 0), 0);
+  const averageScore = totalExams
+    ? Math.round(history.reduce((sum, item) => sum + (item.percentage || 0), 0) / totalExams)
+    : null;
+  const bestRecord = history.reduce<ExamHistoryRecord | null>((best, item) => {
+    if (!best || (item.percentage || 0) > (best.percentage || 0)) return item;
     return best;
   }, null);
+  const totalHours = Math.floor(totalSeconds / 3600);
+  const totalMinutes = Math.floor((totalSeconds % 3600) / 60);
+  const metrics = [
+    { label: "মোট পরীক্ষা", value: String(totalExams), detail: totalExams ? "সম্পন্ন পরীক্ষা" : "এখনও কোনো পরীক্ষা নেই", icon: BookOpen, color: "emerald" },
+    { label: "উত্তরযোগ্য নম্বর", value: String(totalQuestions), detail: "সংরক্ষিত ফলাফলের মোট নম্বর", icon: CheckCircle2, color: "blue" },
+    { label: "অনুশীলন সময়", value: totalSeconds ? `${totalHours}ঘ ${totalMinutes}মি` : "০ মি", detail: "এই ডিভাইসে রেকর্ড করা সময়", icon: Clock, color: "purple" },
+    { label: "গড় স্কোর", value: averageScore === null ? "—" : `${averageScore}%`, detail: averageScore === null ? "প্রথম পরীক্ষা দাও" : "সব পরীক্ষার গড়", icon: Target, color: "amber" },
+    { label: "সর্বশেষ স্কোর", value: history[0] ? `${history[0].score}/${history[0].maxScore}` : "—", detail: history[0]?.subject || "পরীক্ষার পর এখানে দেখাবে", icon: BarChart3, color: "rose" },
+    { label: "সেরা স্কোর", value: bestRecord ? `${bestRecord.score}/${bestRecord.maxScore}` : "—", detail: bestRecord?.subject || "এখনও রেকর্ড নেই", icon: Trophy, color: "yellow" },
+  ] as const;
 
-  const displayTotalExams = Math.max(historyExams, 47);
-  const displayTotalQuestions = Math.max(historyQuestions, 682);
-  const displayHours = historyTimeSeconds > 0
-    ? `${Math.floor(historyTimeSeconds / 3600)}h ${Math.floor((historyTimeSeconds % 3600) / 60)}m`
-    : "52h 30m";
-  const displayBestScore = bestRecord
-    ? `${bestRecord.score} / ${bestRecord.max}`
-    : "96 / 100";
-  const displayBestSubject = bestRecord ? bestRecord.subject : "পদার্থবিজ্ঞান ১ম পত্র";
+  const colors: Record<string, string> = {
+    emerald: "bg-emerald-50 text-emerald-700",
+    blue: "bg-blue-50 text-blue-700",
+    purple: "bg-purple-50 text-purple-700",
+    amber: "bg-amber-50 text-amber-700",
+    rose: "bg-rose-50 text-rose-700",
+    yellow: "bg-yellow-50 text-yellow-700",
+  };
 
   return (
-    <section className="mb-8" aria-label="অনুশীলন মেট্রিক্স ও পরিসংখ্যান">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        {/* Card 1: মোট পরীক্ষা */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-emerald-300 transition-all card-hover-lift">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">মোট পরীক্ষা</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">{displayTotalExams}</p>
-            </div>
-          </div>
-          <p className="text-[11px] font-medium text-emerald-600">+৫ এই সপ্তাহে</p>
+    <section className="mb-8" aria-label="বাস্তব অনুশীলন পরিসংখ্যান">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">তোমার অগ্রগতি</p>
+          <h2 className="mt-1 text-lg font-extrabold text-slate-900 sm:text-xl">প্রস্তুতির হিসাব</h2>
         </div>
-
-        {/* Card 2: মোট প্রশ্ন */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-blue-300 transition-all card-hover-lift">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5" />
+        <p className="text-xs text-slate-500">শুধু সংরক্ষিত পরীক্ষার তথ্য</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        {metrics.map(({ label, value, detail, icon: Icon, color }) => (
+          <article key={label} className="card-hover-lift min-w-0 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${colors[color]}`}><Icon className="h-4.5 w-4.5" /></span>
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">মোট প্রশ্ন</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">{displayTotalQuestions}</p>
-            </div>
-          </div>
-          <p className="text-[11px] font-medium text-slate-500">MCQ 482 | CQ 200</p>
-        </div>
-
-        {/* Card 3: মোট সময় অনুশীলন */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-purple-300 transition-all card-hover-lift">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">অনুশীলন সময়</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">{displayHours}</p>
-            </div>
-          </div>
-          <p className="text-[11px] font-medium text-purple-600">এই সপ্তাহে ৮h ১২m</p>
-        </div>
-
-        {/* Card 4: গড় স্কোর */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-amber-300 transition-all card-hover-lift">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-              <Target className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">গড় স্কোর</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">{avgScore}%</p>
-            </div>
-          </div>
-          <p className="text-[11px] font-medium text-amber-600">+১২% উন্নতি</p>
-        </div>
-
-        {/* Card 5: র‍্যাঙ্ক (Local) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-rose-300 transition-all card-hover-lift">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
-              <BarChart3 className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">র‍্যাঙ্ক (Local)</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">১২ / ৩৫৪</p>
-            </div>
-          </div>
-          <p className="text-[11px] font-medium text-slate-500">বিজ্ঞান বিভাগ</p>
-        </div>
-
-        {/* Card 6: সেরা স্কোর */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-yellow-400 transition-all card-hover-lift">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-yellow-500/10 text-yellow-600 flex items-center justify-center shrink-0">
-              <Trophy className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">সেরা স্কোর</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">{displayBestScore}</p>
-            </div>
-          </div>
-          <p className="text-[11px] font-medium text-slate-500 truncate">{displayBestSubject}</p>
-        </div>
+            <p className="truncate text-xs font-semibold text-slate-500">{label}</p>
+            <p className="mt-1 truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">{value}</p>
+            <p className="mt-1 min-h-8 text-[10px] leading-4 text-slate-500">{detail}</p>
+          </article>
+        ))}
       </div>
     </section>
   );
