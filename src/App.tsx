@@ -84,12 +84,16 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => {
       const requested = viewFromHash();
-      if (requested === "EXAM" && !currentExam) { setView("SETUP"); return; }
-      if (requested === "RESULT" && !examResult) { setView("SETUP"); return; }
+      if (requested === "EXAM" && !currentExam) { navigateView("SETUP", true); return; }
+      if (requested === "RESULT" && !examResult) { navigateView("SETUP", true); return; }
       setView(requested);
     };
     window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    window.addEventListener("popstate", onHashChange);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener("popstate", onHashChange);
+    };
   }, [currentExam, examResult]);
 
   // Persist full application state on this device after restoration completes.
