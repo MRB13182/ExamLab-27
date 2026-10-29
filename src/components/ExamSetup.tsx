@@ -459,7 +459,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>বোর্ড সিলেবাস অনুযায়ী প্রশ্নপত্র তৈরি হচ্ছে...</span>
+                  <span>প্রশ্ন তৈরি হচ্ছে… সাধারণত সংক্ষিপ্ত সেট দ্রুত তৈরি হয়</span>
                 </>
               ) : (
                 <>
@@ -470,7 +470,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
               )}
             </button>
             <p className="text-center text-xs text-slate-400 mt-2.5">
-              স্বয়ংক্রিয় সময়: প্রতিটি MCQ ১ মিনিট + প্রতিটি CQ ২০ মিনিট · মোট {((examType === "CQ" ? 0 : mcqCount) + (examType === "MCQ" ? 0 : cqCount) * 20)} মিনিট
+              দ্রুত আউটপুটের জন্য অপ্রয়োজনীয় অতিরিক্ত ব্যাখ্যা সীমিত রাখা হয় · স্বয়ংক্রিয় সময়: MCQ ১ মিনিট + CQ ২০ মিনিট · মোট {((examType === "CQ" ? 0 : mcqCount) + (examType === "MCQ" ? 0 : cqCount) * 20)} মিনিট
             </p>
           </div>
         </form>
