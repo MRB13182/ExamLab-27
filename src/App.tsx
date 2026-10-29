@@ -7,6 +7,7 @@ import { HistoryModal } from "./components/HistoryModal";
 import { GuidelineModal } from "./components/GuidelineModal";
 import { PublicExam, ExamResultData, ExamHistoryRecord } from "./types";
 import { HSC_SUBJECTS } from "./data/hscSyllabus";
+import { ExamScheduler } from "./components/ExamScheduler";
 
 const HISTORY_STORAGE_KEY = "hsc_2027_exam_history";
 const APP_STORAGE_KEY = "hsc_2027_app_state_v1";
@@ -40,6 +41,20 @@ export default function App() {
   const [history, setHistory] = useState<ExamHistoryRecord[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
+  const [updateNotice, setUpdateNotice] = useState(false);
+
+  // Announce a deployed version change once, then dismiss the notice after five seconds.
+  useEffect(() => {
+    const version = document.querySelector('meta[name="app-version"]')?.getAttribute("content") || "2026.10.29.2";
+    const stored = localStorage.getItem("hsc_2027_last_seen_app_version");
+    if (stored && stored !== version) {
+      setUpdateNotice(true);
+      localStorage.setItem("hsc_2027_last_seen_app_version", version);
+      const timer = window.setTimeout(() => setUpdateNotice(false), 5000);
+      return () => window.clearTimeout(timer);
+    }
+    if (!stored) localStorage.setItem("hsc_2027_last_seen_app_version", version);
+  }, []);
 
   // Restore the complete local snapshot (exam, current result, records and screen),
   // then fall back to legacy keys for users upgrading from an earlier version.
@@ -246,7 +261,15 @@ export default function App() {
 
       {/* Main View Area */}
       <main className="flex-1">
+        {updateNotice && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md rounded-2xl bg-indigo-950 text-white shadow-2xl px-4 py-3 flex items-center gap-3" role="status" aria-live="polite">
+            <span className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg">↻</span>
+            <div className="min-w-0 flex-1"><p className="font-bold text-sm">নতুন আপডেট available!</p><p className="text-xs text-indigo-100">নতুন version-এর জন্য navbar থেকে APK ডাউনলোড করো।</p></div>
+            <button type="button" aria-label="বন্ধ করুন" onClick={() => setUpdateNotice(false)} className="text-white/70 hover:text-white text-xl leading-none">×</button>
+          </div>
+        )}
         {view === "SETUP" && (
+          <>
           <ExamSetup
             onExamCreated={handleExamCreated}
             isLoading={isLoading}
@@ -254,6 +277,8 @@ export default function App() {
             error={error}
             setError={setError}
           />
+          <ExamScheduler />
+          </>
         )}
 
         {view === "EXAM" && currentExam && (
