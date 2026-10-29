@@ -100,7 +100,9 @@ export default function App() {
   useEffect(() => {
     if (!appStateRestored) return;
     try {
-      const snapshot = { schemaVersion: 1, savedAt: new Date().toISOString(), view, currentExam, examResult, history };
+      // Keep records in one key only to avoid duplicating the full history in
+      // the app snapshot and exhausting the browser's localStorage quota.
+      const snapshot = { schemaVersion: 1, savedAt: new Date().toISOString(), view, currentExam, examResult };
       localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(snapshot));
       localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
     } catch (e) {
@@ -151,8 +153,10 @@ export default function App() {
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = "hsc-2027-examlab-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30000);
   };
 
   const handleClearHistory = () => {
