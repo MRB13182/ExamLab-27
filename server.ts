@@ -107,7 +107,8 @@ Requirements:
 
     const textOutput = await generateWithFallback(ai, {
       contents: prompt,
-      temperature: 0.45,
+      temperature: 0.35,
+      maxOutputTokens: Math.min(16384, 1200 + mcqCount * 220 + cqCount * 950),
     });
 
     const fullExam = parseJson(textOutput);
