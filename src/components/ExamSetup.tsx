@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { HSC_SUBJECTS } from "../data/hscSyllabus";
 import { ExamType, ExamDifficulty, PublicExam } from "../types";
 import { Sparkles, Clock, HelpCircle, Layers, CheckCircle2, ChevronRight, AlertCircle, FileText } from "lucide-react";
@@ -18,6 +18,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
   error,
   setError,
 }) => {
+  const SETUP_STORAGE_KEY = "hsc_2027_exam_setup_v1";
   const [selectedSubjectId, setSelectedSubjectId] = useState("physics");
   const [selectedPaper, setSelectedPaper] = useState("১ম পত্র");
   const [selectedChapters, setSelectedChapters] = useState<string[]>(["ভৌতজগৎ ও পরিমাপ"]);
@@ -26,7 +27,34 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
   const [difficulty, setDifficulty] = useState<ExamDifficulty>("Board standard");
   const [mcqCount, setMcqCount] = useState(10);
   const [cqCount, setCqCount] = useState(2);
-  const [durationMinutes, setDurationMinutes] = useState(30);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETUP_STORAGE_KEY) || "null");
+      if (!saved || typeof saved !== "object") return;
+      if (HSC_SUBJECTS.some((subject) => subject.id === saved.selectedSubjectId)) setSelectedSubjectId(saved.selectedSubjectId);
+      if (typeof saved.selectedPaper === "string") setSelectedPaper(saved.selectedPaper);
+      if (Array.isArray(saved.selectedChapters)) setSelectedChapters(saved.selectedChapters.filter((x: unknown) => typeof x === "string"));
+      if (typeof saved.customChapter === "string") setCustomChapter(saved.customChapter);
+      if (["Both", "CQ", "MCQ"].includes(saved.examType)) setExamType(saved.examType);
+      if (["Board standard", "Easy to hard", "Challenging"].includes(saved.difficulty)) setDifficulty(saved.difficulty);
+      if ([5, 10, 15, 20, 25, 30, 35, 40].includes(saved.mcqCount)) setMcqCount(saved.mcqCount);
+      if ([1, 2, 3, 4, 5, 6, 7, 8].includes(saved.cqCount)) setCqCount(saved.cqCount);
+    } catch (error) {
+      console.warn("Could not restore exam setup preferences", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETUP_STORAGE_KEY, JSON.stringify({
+        selectedSubjectId, selectedPaper, selectedChapters, customChapter,
+        examType, difficulty, mcqCount, cqCount
+      }));
+    } catch (error) {
+      console.warn("Could not save exam setup preferences", error);
+    }
+  }, [selectedSubjectId, selectedPaper, selectedChapters, customChapter, examType, difficulty, mcqCount, cqCount]);
 
   const currentSubject = HSC_SUBJECTS.find((s) => s.id === selectedSubjectId) || HSC_SUBJECTS[0];
   const availablePapers = currentSubject.papers;
@@ -62,6 +90,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
 
     const finalMcq = examType === "CQ" ? 0 : mcqCount;
     const finalCq = examType === "MCQ" ? 0 : cqCount;
+    const durationMinutes = finalMcq + finalCq * 20;
 
     if (finalMcq + finalCq === 0) {
       setError("অন্তত একটি প্রশ্ন সংখ্যা নির্ধারণ করো।");
@@ -300,7 +329,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
             </div>
           </div>
 
-          {/* 4. Exam Question Style, Difficulty, Duration */}
+          {/* 4. Exam Question Style and Difficulty */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
             {/* Exam Format */}
             <div>
@@ -365,31 +394,9 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
               </div>
             </div>
 
-            {/* Duration */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                ৬. সময়সীমা
-              </label>
-              <div className="flex items-center gap-2">
-                {[15, 25, 35, 50].map((mins) => (
-                  <button
-                    key={mins}
-                    type="button"
-                    onClick={() => setDurationMinutes(mins)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all tabular-nums ${
-                      durationMinutes === mins
-                        ? "bg-indigo-50 border-indigo-600 text-indigo-700"
-                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                    }`}
-                  >
-                    {mins} মি.
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
-          {/* 5. Question Numbers Config */}
+          {/* 5. Question Numbers Config; exam time is automatically calculated */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
             {examType !== "CQ" && (
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
@@ -463,7 +470,7 @@ export const ExamSetup: React.FC<ExamSetupProps> = ({
               )}
             </button>
             <p className="text-center text-xs text-slate-400 mt-2.5">
-              টাইমার ও স্বয়ংক্রিয় সাবমিট সহ লাইভ পরীক্ষার পরিবেশ
+              স্বয়ংক্রিয় সময়: প্রতিটি MCQ ১ মিনিট + প্রতিটি CQ ২০ মিনিট · মোট {((examType === "CQ" ? 0 : mcqCount) + (examType === "MCQ" ? 0 : cqCount) * 20)} মিনিট
             </p>
           </div>
         </form>
