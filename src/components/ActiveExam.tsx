@@ -732,7 +732,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
               </button>
               <button
                 type="button"
-                onClick={executeSubmission}
+                onClick={() => void executeSubmission(false)}
                 disabled={isSubmitting}
                 className="flex-1 py-3 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
               >
