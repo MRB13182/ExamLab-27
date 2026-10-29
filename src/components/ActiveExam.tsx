@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PublicExam, ExamResultData } from "../types";
-import { printCQQuestionPaper } from "../lib/print";
+import { downloadQuestionPaperPdf } from "../lib/print";
 import {
   Clock,
   CheckCircle2,
@@ -11,7 +11,8 @@ import {
   Bookmark,
   Send,
   AlertCircle,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
 
 interface ActiveExamProps {
@@ -49,14 +50,26 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
   } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const handleDownloadQuestionPaper = async () => {
+    if (isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
+    try {
+      await downloadQuestionPaperPdf(exam);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
   const [timeWarning, setTimeWarning] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const submissionStartedRef = useRef(false);
   const latestAnswersRef = useRef({ mcqAnswers, cqAnswers, uploadedImage, secondsRemaining });
   useEffect(() => { latestAnswersRef.current = { mcqAnswers, cqAnswers, uploadedImage, secondsRemaining }; }, [mcqAnswers, cqAnswers, uploadedImage, secondsRemaining]);
   const draftKey = "hsc_2027_active_exam_" + exam.examId;
+  const deadlineRef = useRef<number>(Date.now() + totalSeconds * 1000);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -68,14 +81,20 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
         const saved = JSON.parse(raw);
         if (saved.mcqAnswers && typeof saved.mcqAnswers === "object") setMcqAnswers(saved.mcqAnswers);
         if (saved.cqAnswers && typeof saved.cqAnswers === "object") setCqAnswers(saved.cqAnswers);
-        if (typeof saved.expiresAt === "number") setSecondsRemaining(Math.max(0, Math.ceil((saved.expiresAt - Date.now()) / 1000)));
+        if (typeof saved.deadlineTimestamp === "number") {
+          deadlineRef.current = saved.deadlineTimestamp;
+        } else if (typeof saved.expiresAt === "number") {
+          deadlineRef.current = saved.expiresAt;
+        }
       }
     } catch (error) {
       console.warn("Could not restore exam draft", error);
     } finally {
+      const diff = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+      setSecondsRemaining(diff);
       setDraftReady(true);
     }
-  }, [draftKey]);
+  }, [draftKey, totalSeconds]);
 
   // Keep responses and deadline on this device only.
   useEffect(() => {
@@ -86,37 +105,48 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
         exam,
         mcqAnswers,
         cqAnswers,
-        expiresAt: Date.now() + secondsRemaining * 1000,
+        deadlineTimestamp: deadlineRef.current,
+        expiresAt: deadlineRef.current,
         savedAt: new Date().toISOString(),
       }));
     } catch (error) {
       console.warn("Could not save exam draft locally", error);
     }
-  }, [draftReady, draftKey, exam.examId, mcqAnswers, cqAnswers, secondsRemaining]);
+  }, [draftReady, draftKey, exam.examId, exam, mcqAnswers, cqAnswers]);
 
-  // Countdown Timer
+  // Accurate countdown timer based on wall clock / absolute timestamp
   useEffect(() => {
-    if (secondsRemaining <= 0) {
-      handleAutoSubmit();
-      return;
-    }
+    if (!draftReady) return;
 
-    const timer = setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleAutoSubmit();
-          return 0;
-        }
-        if (prev === 120) {
-          setTimeWarning(true);
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const checkTimer = () => {
+      if (submissionStartedRef.current) return;
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((deadlineRef.current - now) / 1000));
+      setSecondsRemaining(remaining);
+      if (remaining <= 120 && remaining > 0) {
+        setTimeWarning(true);
+      }
+      if (remaining <= 0) {
+        handleAutoSubmit();
+      }
+    };
 
-    return () => clearInterval(timer);
-  }, [secondsRemaining]);
+    checkTimer();
+    const timer = setInterval(checkTimer, 500);
+
+    const handleVisibilityOrFocus = () => {
+      checkTimer();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
+  }, [draftReady]);
 
   // Format time mm:ss
   const formatTime = (secs: number) => {
@@ -205,6 +235,16 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
     try {
       const payload: any = {
         examId: exam.examId,
+        sessionToken: exam.sessionToken || "",
+        exam: {
+          title: exam.title,
+          subject: exam.subject,
+          paper: exam.paper,
+          chapter: exam.chapter,
+          difficulty: exam.difficulty,
+          mcqs: exam.mcqs,
+          cqs: exam.cqs,
+        },
         subject: exam.subject,
         chapter: exam.chapter,
         answers: combinedAnswers,
@@ -239,6 +279,8 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
       onSubmitted({
         ...data.result,
         timeTakenSeconds: timeTaken,
+        autoSubmitted: automatic,
+        submissionType: automatic ? "AUTOMATIC" : "MANUAL",
       });
     } catch (err: any) {
       console.error("Submission error:", err);
@@ -281,15 +323,20 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
 
           {/* Countdown Timer */}
           <div className="flex items-center gap-2 shrink-0">
-            {exam.cqs.length > 0 && (
+            {(exam.cqs.length > 0 || exam.mcqs.length > 0) && (
               <button
                 type="button"
-                onClick={() => printCQQuestionPaper(exam)}
-                title="CQ প্রশ্নপত্র A4 PDF"
-                aria-label="CQ প্রশ্নপত্র PDF"
-                className="p-2 rounded-xl border border-slate-200 text-indigo-700 hover:bg-indigo-50 print:hidden"
+                onClick={handleDownloadQuestionPaper}
+                disabled={isDownloadingPdf}
+                title="প্রশ্নপত্র A4 PDF ডাউনলোড"
+                aria-label="প্রশ্নপত্র A4 PDF"
+                className="p-2 rounded-xl border border-slate-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 print:hidden transition-colors"
               >
-                <FileText className="w-4 h-4" />
+                {isDownloadingPdf ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                ) : (
+                  <FileText className="w-4 h-4" />
+                )}
               </button>
             )}
             <div

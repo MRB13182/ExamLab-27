@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ExamResultData } from "../types";
-import { downloadFullResultPdf, printCQAnswerPaper } from "../lib/print";
+import { downloadFullResultPdf, printCQAnswerPaper, printFullResultDocument } from "../lib/print";
 import {
   CheckCircle2,
   XCircle,
@@ -12,7 +12,8 @@ import {
   Printer,
   FileCheck2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2
 } from "lucide-react";
 
 interface ExamResultProps {
@@ -30,9 +31,34 @@ export const ExamResult: React.FC<ExamResultProps> = ({
     result.mcqResults.length > 0 ? "MCQ" : "CQ"
   );
   const [expandedCqs, setExpandedCqs] = useState<Record<string, boolean>>({});
+  const [downloadingType, setDownloadingType] = useState<"FULL" | "CQ" | null>(null);
 
   const toggleCqExpand = (id: string) => {
     setExpandedCqs((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleDownloadFull = async () => {
+    if (downloadingType) return;
+    setDownloadingType("FULL");
+    try {
+      await downloadFullResultPdf(result);
+    } finally {
+      setDownloadingType(null);
+    }
+  };
+
+  const handleDownloadCq = async () => {
+    if (downloadingType) return;
+    setDownloadingType("CQ");
+    try {
+      await printCQAnswerPaper(result);
+    } finally {
+      setDownloadingType(null);
+    }
+  };
+
+  const handlePrint = () => {
+    printFullResultDocument(result);
   };
 
   const calculateGrade = (pct: number) => {
@@ -74,7 +100,20 @@ export const ExamResult: React.FC<ExamResultProps> = ({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               {result.title}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 flex items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              {result.autoSubmitted ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>সময় শেষ হওয়ায় স্বয়ংক্রিয়ভাবে জমা হয়েছে (Auto-Submitted)</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>সফলভাবে জমা হয়েছে (Manually Submitted)</span>
+                </span>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-2 flex items-center gap-2 flex-wrap">
               <Clock className="w-4 h-4 text-slate-400" />
               <span>সময় নেওয়া হয়েছে: {formatMinutes(result.timeTakenSeconds)}</span>
               <span aria-hidden="true">·</span>
@@ -86,24 +125,59 @@ export const ExamResult: React.FC<ExamResultProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button type="button" onClick={() => downloadFullResultPdf(result)} className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition-colors print:hidden"><FileCheck2 className="w-4 h-4" /><span>সম্পূর্ণ Result PDF</span></button>
+            <button
+              type="button"
+              onClick={handleDownloadFull}
+              disabled={downloadingType !== null}
+              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white flex items-center gap-1.5 transition-colors print:hidden shadow-xs"
+            >
+              {downloadingType === "FULL" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>PDF তৈরি হচ্ছে…</span>
+                </>
+              ) : (
+                <>
+                  <FileCheck2 className="w-4 h-4" />
+                  <span>সম্পূর্ণ Result PDF</span>
+                </>
+              )}
+            </button>
+
             {result.cqEvaluation?.items?.length > 0 && (
               <button
-                onClick={() => printCQAnswerPaper(result)}
-                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 text-indigo-700 flex items-center gap-1.5 transition-colors print:hidden"
+                type="button"
+                onClick={handleDownloadCq}
+                disabled={downloadingType !== null}
+                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 disabled:opacity-60 text-indigo-700 flex items-center gap-1.5 transition-colors print:hidden"
               >
-                <FileCheck2 className="w-4 h-4" />
-                <span>CQ উত্তর PDF</span>
+                {downloadingType === "CQ" ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>PDF হচ্ছে…</span>
+                  </>
+                ) : (
+                  <>
+                    <FileCheck2 className="w-4 h-4" />
+                    <span>CQ উত্তর PDF</span>
+                  </>
+                )}
               </button>
             )}
+
             <button
-              onClick={() => window.print()}
+              type="button"
+              onClick={handlePrint}
+              disabled={downloadingType !== null}
               className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-colors print:hidden"
+              title="A4 সাইজে প্রিন্ট বা সেভ করুন"
             >
               <Printer className="w-4 h-4 text-slate-500" />
-              <span>প্রিন্ট / সংরক্ষণ</span>
+              <span>প্রিন্ট / সেভ PDF</span>
             </button>
+
             <button
+              type="button"
               onClick={onNewExam}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-all print:hidden"
             >

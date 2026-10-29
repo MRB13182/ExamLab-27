@@ -42,6 +42,7 @@ export interface PublicExam {
   mcqs: MCQQuestion[];
   cqs: CreativeQuestion[];
   sources?: ExamSource[];
+  sessionToken?: string;
 }
 
 export interface MCQResultItem {
@@ -93,6 +94,8 @@ export interface ExamResultData {
   percentage: number;
   note?: string;
   timeTakenSeconds?: number;
+  autoSubmitted?: boolean;
+  submissionType?: "AUTOMATIC" | "MANUAL";
 }
 
 export interface ExamHistoryRecord {

@@ -111,6 +111,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
+import android.webkit.DownloadListener;
 import android.net.Uri;
 import android.content.Intent;
 import android.view.KeyEvent;
@@ -142,9 +143,36 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
 
+        mWebView.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                try {
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setDataAndType(Uri.parse(url), mimetype != null && mimetype.length() > 0 ? mimetype : "application/pdf");
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception e) {
+                    try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(browserIntent);
+                    } catch (Exception ignored) {}
+                }
+            }
+        });
+
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.startsWith("blob:") || url.startsWith("data:")) {
+                    return false;
+                }
+                if (url.endsWith(".apk") || url.endsWith(".pdf")) {
+                    try {
+                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(i);
+                        return true;
+                    } catch (Exception ignored) {}
+                }
                 view.loadUrl(url);
                 return true;
             }
