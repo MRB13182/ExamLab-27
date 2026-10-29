@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {
   Clock, BarChart2, Zap, HardDrive, Download, Upload, ChevronRight,
-  Sparkles, Trophy, FileText, Award, BookOpen, TrendingUp, ShieldCheck
+  Sparkles, Trophy, FileText, Award, BookOpen, TrendingUp, ShieldCheck, BookOpenCheck
 } from "lucide-react";
 import { ExamHistoryRecord, ExamResultData } from "../types";
 
@@ -13,6 +13,7 @@ interface DashboardOverviewProps {
   onOpenBoardQuestions: () => void;
   onOpenHistory: () => void;
   onOpenRevisionNotes: () => void;
+  onOpenMistakes: () => void;
   onExportData: () => void;
   onImportData: (file: File) => void;
 }
@@ -21,7 +22,7 @@ const subjectColors = ["bg-blue-500", "bg-violet-500", "bg-emerald-500", "bg-amb
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   history, onSelectRecord, onStartExamClick, onOpenChapterSelector,
-  onOpenBoardQuestions, onOpenHistory, onOpenRevisionNotes, onExportData, onImportData,
+  onOpenBoardQuestions, onOpenHistory, onOpenRevisionNotes, onOpenMistakes, onExportData, onImportData,
 }) => {
   const [timeFilter, setTimeFilter] = useState("30");
   const cutoff = timeFilter === "all" ? 0 : Date.now() - Number(timeFilter) * 86400000;
@@ -126,6 +127,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <button type="button" onClick={onOpenChapterSelector} className="flex w-full items-center justify-between rounded-xl border border-sky-100 bg-sky-50 px-3.5 py-3 text-left text-xs font-bold text-sky-800 transition hover:bg-sky-100"><span className="flex items-center gap-2"><Trophy className="h-4 w-4" /> অধ্যায়ভিত্তিক অনুশীলন</span><ChevronRight className="h-4 w-4" /></button>
               <button type="button" onClick={onOpenBoardQuestions} className="flex w-full items-center justify-between rounded-xl border border-violet-100 bg-violet-50 px-3.5 py-3 text-left text-xs font-bold text-violet-800 transition hover:bg-violet-100"><span className="flex items-center gap-2"><Award className="h-4 w-4" /> বিগত বছরের প্রশ্ন</span><ChevronRight className="h-4 w-4" /></button>
               <button type="button" onClick={onOpenRevisionNotes} className="flex w-full items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-3 text-left text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"><span className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> নোটস ও রিভিশন</span><ChevronRight className="h-4 w-4" /></button>
+              <button type="button" onClick={onOpenMistakes} className="flex w-full items-center justify-between rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-3 text-left text-xs font-bold text-rose-800 transition hover:bg-rose-100"><span className="flex items-center gap-2"><BookOpenCheck className="h-4 w-4" /> ভুলের খাতা</span><ChevronRight className="h-4 w-4" /></button>
               <button type="button" onClick={onOpenHistory} className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left text-xs font-bold text-slate-800 transition hover:bg-slate-100"><span className="flex items-center gap-2"><FileText className="h-4 w-4" /> ফলাফল ও রেকর্ড</span><ChevronRight className="h-4 w-4" /></button>
             </div>
           </div>
