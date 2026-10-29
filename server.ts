@@ -33,9 +33,11 @@ app.post("/api/exam/generate", async (req, res) => {
     const questionPattern = String(body.questionPattern || "Use the standard HSC question style for this subject and paper.").slice(0, 2500);
     const type = allowedTypes.has(body.type) ? body.type : "Both";
     const difficulty = allowedDifficulty.has(body.difficulty) ? body.difficulty : "Board standard";
-    const durationMinutes = Math.min(180, Math.max(5, Number(body.durationMinutes) || 30));
     const mcqCount = Math.min(40, Math.max(0, Number(body.mcqCount) || 0));
     const cqCount = Math.min(8, Math.max(0, Number(body.cqCount) || 0));
+    // Match the UI timer contract: 1 minute per MCQ and 20 minutes per CQ.
+    const calculatedDuration = mcqCount + cqCount * 20;
+    const durationMinutes = Math.min(240, Math.max(1, Number(body.durationMinutes) || calculatedDuration || 1));
 
     if (!chapter.trim()) {
       return res.status(400).json({ error: "অধ্যায়ের নাম লিখো বা নির্বাচন করো।" });
