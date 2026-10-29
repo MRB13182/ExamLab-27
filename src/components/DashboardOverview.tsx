@@ -24,7 +24,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onOpenBoardQuestions, onOpenHistory, onOpenRevisionNotes, onExportData, onImportData,
 }) => {
   const [timeFilter, setTimeFilter] = useState("30");
-  const cutoff = useMemo(() => timeFilter === "all" ? 0 : Date.now() - Number(timeFilter) * 86400000, [timeFilter, history]);
+  const cutoff = timeFilter === "all" ? 0 : Date.now() - Number(timeFilter) * 86400000;
   const filteredHistory = history.filter((item) => {
     const timestamp = new Date(item.date || 0).getTime();
     return timeFilter === "all" || (Number.isFinite(timestamp) && timestamp >= cutoff);
@@ -40,8 +40,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       map.set(key, current);
     });
     return [...map.entries()].map(([name, stats]) => ({
-      name, percentage: stats.max ? Math.round(stats.total / stats.max * 100) : 0,
-      exams: stats.count, color: subjectColors[map.size % subjectColors.length],
+      name, percentage: stats.max ? Math.round(stats.total / stats.max * 100) : 0, exams: stats.count,
     })).sort((a, b) => b.exams - a.exams);
   }, [filteredHistory]);
 
@@ -70,7 +69,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="flex min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-5 sm:p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Clock className="h-4.5 w-4.5" /></span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Clock className="h-4 w-4" /></span>
             <div><h3 className="font-extrabold text-slate-900">সাম্প্রতিক পরীক্ষা</h3><p className="text-xs text-slate-500">শেষ ৫টি রেকর্ড</p></div>
           </div>
           {history.length ? (
@@ -97,7 +96,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         <div className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-4 sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><BarChart2 className="h-4.5 w-4.5" /></span><div><h3 className="font-extrabold text-slate-900">বিষয়ভিত্তিক বিশ্লেষণ</h3><p className="text-xs text-slate-500">নির্বাচিত সময়ের গড়</p></div></div>
+            <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><BarChart2 className="h-4 w-4" /></span><div><h3 className="font-extrabold text-slate-900">বিষয়ভিত্তিক বিশ্লেষণ</h3><p className="text-xs text-slate-500">নির্বাচিত সময়ের গড়</p></div></div>
             <select aria-label="বিশ্লেষণের সময়সীমা" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
               <option value="7">৭ দিন</option><option value="30">৩০ দিন</option><option value="all">সব সময়</option>
             </select>
@@ -110,7 +109,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   <div className="h-2.5 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full transition-all duration-500 ${subjectColors[index % subjectColors.length]}`} style={{ width: `${item.percentage}%` }} /></div>
                 </div>
               ))}
-              <p className="pt-1 text-[11px] leading-5 text-slate-500">শুধু `{timeFilter === "all" ? "সব সময়ের" : `শেষ ${timeFilter} দিনের`}` saved results থেকে হিসাব করা।</p>
+              <p className="pt-1 text-[11px] leading-5 text-slate-500">শুধু {timeFilter === "all" ? "সব সময়ের" : `শেষ ${timeFilter} দিনের`} saved results থেকে হিসাব করা।</p>
             </div>
           ) : (
             <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl bg-slate-50 px-5 text-center">
