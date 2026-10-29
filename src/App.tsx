@@ -38,12 +38,10 @@ const viewFromHash = (): AppView => {
 export default function App() {
   const [view, setView] = useState<AppView>("SETUP");
   const [appStateRestored, setAppStateRestored] = useState(false);
-
   const [currentExam, setCurrentExam] = useState<PublicExam | null>(null);
   const [examResult, setExamResult] = useState<ExamResultData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [history, setHistory] = useState<ExamHistoryRecord[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
@@ -51,7 +49,6 @@ export default function App() {
   const [isRevisionNotesOpen, setIsRevisionNotesOpen] = useState(false);
   const [isChapterSelectorOpen, setIsChapterSelectorOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
   const setupSectionRef = useRef<HTMLDivElement>(null);
 
   const navigateView = (next: AppView, replace = false) => {
@@ -63,32 +60,25 @@ export default function App() {
     }
   };
 
-  // Restore snapshot and exam draft
+  // Restore a saved snapshot before writing defaults, to avoid overwriting an older session.
   useEffect(() => {
     try {
       const snapshotRaw = localStorage.getItem(APP_STORAGE_KEY);
       const snapshot = snapshotRaw ? JSON.parse(snapshotRaw) : null;
       const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-
-      if (Array.isArray(snapshot?.history)) {
-        setHistory(snapshot.history);
-      } else if (storedHistory) {
+      if (Array.isArray(snapshot?.history)) setHistory(snapshot.history);
+      else if (storedHistory) {
         const parsedHistory = JSON.parse(storedHistory);
         if (Array.isArray(parsedHistory)) setHistory(parsedHistory);
       }
-
       if (snapshot?.currentExam?.examId) setCurrentExam(snapshot.currentExam);
       if (snapshot?.examResult) setExamResult(snapshot.examResult);
 
       let restoredView: AppView = "SETUP";
-      if (snapshot?.view === "EXAM" && snapshot?.currentExam?.examId) {
-        restoredView = "EXAM";
-      } else if (snapshot?.view === "RESULT" && snapshot?.examResult) {
-        restoredView = "RESULT";
-      } else {
-        const draftKey = Object.keys(localStorage).find((key) =>
-          key.startsWith("hsc_2027_active_exam_")
-        );
+      if (snapshot?.view === "EXAM" && snapshot?.currentExam?.examId) restoredView = "EXAM";
+      else if (snapshot?.view === "RESULT" && snapshot?.examResult) restoredView = "RESULT";
+      else {
+        const draftKey = Object.keys(localStorage).find((key) => key.startsWith("hsc_2027_active_exam_"));
         if (draftKey) {
           const draft = JSON.parse(localStorage.getItem(draftKey) || "null");
           if (draft?.exam?.examId) {
@@ -106,7 +96,6 @@ export default function App() {
     }
   }, []);
 
-  // Hash navigation sync
   useEffect(() => {
     const onHashChange = () => {
       const requested = viewFromHash();
@@ -128,17 +117,10 @@ export default function App() {
     };
   }, [currentExam, examResult]);
 
-  // Persist state
   useEffect(() => {
     if (!appStateRestored) return;
     try {
-      const snapshot = {
-        schemaVersion: 1,
-        savedAt: new Date().toISOString(),
-        view,
-        currentExam,
-        examResult,
-      };
+      const snapshot = { schemaVersion: 1, savedAt: new Date().toISOString(), view, currentExam, examResult, history };
       localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(snapshot));
       localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
     } catch (e) {
@@ -146,7 +128,6 @@ export default function App() {
     }
   }, [appStateRestored, view, currentExam, examResult, history]);
 
-  // Save history record
   const saveRecord = (result: ExamResultData, exam: PublicExam) => {
     const newRecord: ExamHistoryRecord = {
       id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -158,105 +139,87 @@ export default function App() {
       maxScore: result.totalMax,
       percentage: result.percentage,
       date: new Date().toISOString(),
-      examType:
-        exam.mcqs.length > 0 && exam.cqs.length > 0
-          ? "Both"
-          : exam.mcqs.length > 0
-          ? "MCQ"
-          : "CQ",
+      examType: exam.mcqs.length > 0 && exam.cqs.length > 0 ? "Both" : exam.mcqs.length > 0 ? "MCQ" : "CQ",
       result,
     };
-
     setHistory((prev) => {
       const updated = [newRecord, ...prev].slice(0, 50);
-      try {
-        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated));
-      } catch (err) {
-        console.error("Failed to save history:", err);
-      }
+      try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated)); }
+      catch (err) { console.error("Failed to save history:", err); }
       return updated;
     });
   };
 
   const scrollToSetup = () => {
-    if (view !== "SETUP") {
-      navigateView("SETUP");
-    }
-    setTimeout(() => {
-      setupSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 80);
+    if (view !== "SETUP") navigateView("SETUP");
+    window.setTimeout(() => setupSectionRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
   };
 
   const handleExportData = () => {
-    const keys = Object.keys(localStorage);
-    const localData = Object.fromEntries(
-      keys.map((key) => [key, localStorage.getItem(key)])
-    );
-    const payload = {
-      app: "HSC 2027 AI Exam Lab",
-      schemaVersion: 1,
-      exportedAt: new Date().toISOString(),
-      syllabus: HSC_SUBJECTS,
-      history,
-      localStorage: localData,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download =
-      "hsc-2027-examlab-backup-" + new Date().toISOString().slice(0, 10) + ".json";
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+    try {
+      const keys = Object.keys(localStorage);
+      const localData = Object.fromEntries(keys.map((key) => [key, localStorage.getItem(key)]));
+      const payload = {
+        app: "HSC 2027 AI Exam Lab",
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        syllabus: HSC_SUBJECTS,
+        history,
+        localStorage: localData,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "hsc-2027-examlab-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) {
+      console.error("Failed to export backup", e);
+      window.alert("Backup তৈরি করা যায়নি। ডিভাইসের storage space যাচাই করে আবার চেষ্টা করো।");
+    }
   };
 
   const handleImportData = async (file: File) => {
     try {
-      const parsed = JSON.parse(await file.text());
-      if (
-        parsed?.app !== "HSC 2027 AI Exam Lab" ||
-        !parsed?.localStorage ||
-        typeof parsed.localStorage !== "object"
-      ) {
-        throw new Error("এই ফাইলটি HSC 2027 AI Exam Lab backup নয়।");
+      if (file.size > 25 * 1024 * 1024) throw new Error("Backup ফাইলটি ২৫ MB-এর বেশি। ছোট/সঠিক JSON backup নির্বাচন করো।");
+      const parsed: unknown = JSON.parse(await file.text());
+      if (!parsed || typeof parsed !== "object") throw new Error("Backup JSON-এর format ঠিক নয়।");
+      const backup = parsed as { app?: unknown; localStorage?: unknown; history?: unknown; schemaVersion?: unknown };
+      if (backup.app !== "HSC 2027 AI Exam Lab" || !backup.localStorage || typeof backup.localStorage !== "object" || Array.isArray(backup.localStorage)) {
+        throw new Error("এই ফাইলটি HSC 2027 AI Exam Lab backup নয়। বর্তমান data অপরিবর্তিত রাখা হয়েছে।");
       }
-      Object.keys(localStorage)
-        .filter((key) => key.startsWith("hsc_2027_"))
-        .forEach((key) => localStorage.removeItem(key));
-      for (const [key, value] of Object.entries(
-        parsed.localStorage as Record<string, unknown>
-      )) {
-        if (!key.startsWith("hsc_2027_")) continue;
-        if (typeof value === "string") localStorage.setItem(key, value);
+      const incoming = backup.localStorage as Record<string, unknown>;
+      const restoreEntries = Object.entries(incoming).filter(([key, value]) => key.startsWith("hsc_2027_") && typeof value === "string");
+      if (!restoreEntries.length && !Array.isArray(backup.history)) {
+        throw new Error("Backup-এ restore করার মতো data পাওয়া যায়নি। বর্তমান data অপরিবর্তিত রাখা হয়েছে।");
       }
-      if (Array.isArray(parsed.history)) {
-        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(parsed.history));
-      }
-      window.alert(
-        "Backup restore হয়েছে। পূর্বের অবস্থা লোড করতে পেজ রিলোড হচ্ছে।"
+
+      // Snapshot current state first. If any storage write fails, roll back what was written.
+      const previousEntries = Object.fromEntries(
+        Object.keys(localStorage).filter((key) => key.startsWith("hsc_2027_")).map((key) => [key, localStorage.getItem(key)])
       );
-      window.location.reload();
+      try {
+        for (const [key, value] of restoreEntries) localStorage.setItem(key, value as string);
+        if (Array.isArray(backup.history)) localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(backup.history));
+        window.alert("Backup restore হয়েছে। আগের data সফলভাবে লোড করতে পেজ রিলোড হচ্ছে।");
+        window.location.reload();
+      } catch (writeError) {
+        Object.keys(localStorage).filter((key) => key.startsWith("hsc_2027_")).forEach((key) => localStorage.removeItem(key));
+        for (const [key, value] of Object.entries(previousEntries)) if (value !== null) localStorage.setItem(key, value);
+        throw writeError;
+      }
     } catch (error) {
       console.error("Failed to restore backup:", error);
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "Backup restore করা সম্ভব হয়নি। JSON ফাইলটি যাচাই করো।"
-      );
+      window.alert(error instanceof Error ? error.message : "Backup restore করা সম্ভব হয়নি। JSON ফাইলটি যাচাই করো।");
     }
   };
 
   const handleClearHistory = () => {
     setHistory([]);
-    try {
-      localStorage.removeItem(HISTORY_STORAGE_KEY);
-    } catch (e) {
-      console.error(e);
-    }
+    try { localStorage.removeItem(HISTORY_STORAGE_KEY); } catch (e) { console.error(e); }
   };
 
   const handleExamCreated = (exam: PublicExam) => {
@@ -267,9 +230,7 @@ export default function App() {
 
   const handleSubmitted = (result: ExamResultData) => {
     setExamResult(result);
-    if (currentExam) {
-      saveRecord(result, currentExam);
-    }
+    if (currentExam) saveRecord(result, currentExam);
     navigateView("RESULT");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -278,16 +239,12 @@ export default function App() {
     if (currentExam) {
       navigateView("EXAM");
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      navigateView("SETUP");
-    }
+    } else navigateView("SETUP");
   };
 
   const handleNewExam = () => {
     try {
-      Object.keys(localStorage)
-        .filter((key) => key.startsWith("hsc_2027_active_exam_"))
-        .forEach((key) => localStorage.removeItem(key));
+      Object.keys(localStorage).filter((key) => key.startsWith("hsc_2027_active_exam_")).forEach((key) => localStorage.removeItem(key));
     } catch {}
     setCurrentExam(null);
     setExamResult(null);
@@ -305,43 +262,25 @@ export default function App() {
     const match = HSC_SUBJECTS.find((s) => s.id === subjectId);
     if (match) {
       try {
-        localStorage.setItem(
-          "hsc_2027_exam_setup_v1",
-          JSON.stringify({
-            selectedSubjectId: match.id,
-            selectedPaper: match.papers[0] || "১ম পত্র",
-            examType: format,
-            difficulty: "Board standard",
-            mcqCount: format === "CQ" ? 0 : 15,
-            cqCount: format === "MCQ" ? 0 : 2,
-          })
-        );
+        localStorage.setItem("hsc_2027_exam_setup_v1", JSON.stringify({
+          selectedSubjectId: match.id, selectedPaper: match.papers[0] || "১ম পত্র",
+          examType: format, difficulty: "Board standard", mcqCount: format === "CQ" ? 0 : 15,
+          cqCount: format === "MCQ" ? 0 : 2,
+        }));
       } catch {}
     }
     scrollToSetup();
   };
 
-  const handleSelectChapterExam = (
-    subjectId: string,
-    paper: string,
-    chapter: string,
-    format: ExamType
-  ) => {
+  const handleSelectChapterExam = (subjectId: string, paper: string, chapter: string, format: ExamType) => {
     setIsChapterSelectorOpen(false);
     setIsSearchOpen(false);
     try {
-      localStorage.setItem(
-        "hsc_2027_exam_setup_v1",
-        JSON.stringify({
-          selectedSubjectId: subjectId,
-          selectedPaper: paper,
-          selectedChapters: [chapter],
-          examType: format,
-          difficulty: "Board standard",
-          mcqCount: format === "CQ" ? 0 : 15,
-          cqCount: format === "MCQ" ? 0 : 2,
-        })
-      );
+      localStorage.setItem("hsc_2027_exam_setup_v1", JSON.stringify({
+        selectedSubjectId: subjectId, selectedPaper: paper, selectedChapters: [chapter],
+        examType: format, difficulty: "Board standard", mcqCount: format === "CQ" ? 0 : 15,
+        cqCount: format === "MCQ" ? 0 : 2,
+      }));
     } catch {}
     scrollToSetup();
   };
@@ -350,30 +289,18 @@ export default function App() {
     setIsBoardQuestionsOpen(false);
     try {
       const match = HSC_SUBJECTS.find((s) => s.name === qSet.subject);
-      if (match) {
-        localStorage.setItem(
-          "hsc_2027_exam_setup_v1",
-          JSON.stringify({
-            selectedSubjectId: match.id,
-            selectedPaper: qSet.paper,
-            selectedChapters: qSet.topicsCovered.slice(0, 2),
-            examType: qSet.type,
-            difficulty: "Board standard",
-            mcqCount: qSet.type === "CQ" ? 0 : 15,
-            cqCount: qSet.type === "MCQ" ? 0 : 2,
-          })
-        );
-      }
+      if (match) localStorage.setItem("hsc_2027_exam_setup_v1", JSON.stringify({
+        selectedSubjectId: match.id, selectedPaper: qSet.paper, selectedChapters: qSet.topicsCovered.slice(0, 2),
+        examType: qSet.type, difficulty: "Board standard", mcqCount: qSet.type === "CQ" ? 0 : 15,
+        cqCount: qSet.type === "MCQ" ? 0 : 2,
+      }));
     } catch {}
     scrollToSetup();
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
-      {/* 5-second Update Notification Banner */}
       <UpdateNotification />
-
-      {/* Primary Navy Header Navigation */}
       <Navbar
         onGoHome={handleNewExam}
         onOpenHistory={() => setIsHistoryOpen(true)}
@@ -389,26 +316,12 @@ export default function App() {
         onNewExamClick={scrollToSetup}
       />
 
-      {/* Main View Area with Mobile Bottom Nav Padding */}
       <main className={`flex-1 ${view !== "EXAM" ? "pb-24 lg:pb-12" : ""}`}>
         {view === "SETUP" && (
           <div className="space-y-6 sm:space-y-8">
-            {/* 1. Dashboard Hero Banner with Student Illustration */}
-            <DashboardHero
-              onStartExamClick={scrollToSetup}
-              onExploreSubjectsClick={() => setIsChapterSelectorOpen(true)}
-            />
-
-            {/* 2. 6-Card High-Level Metrics Summary */}
+            <DashboardHero onStartExamClick={scrollToSetup} onExploreSubjectsClick={() => setIsChapterSelectorOpen(true)} />
             <MetricCards history={history} />
-
-            {/* 3. 6-Card Interactive Subject Grid with Quick MCQ/CQ Action Buttons */}
-            <SubjectGrid
-              onSelectSubjectAction={handleSubjectAction}
-              onViewAllSubjects={() => setIsChapterSelectorOpen(true)}
-            />
-
-            {/* 4. 3-Column Dashboard Overview (Recent History, Progress Chart, Quick Actions) */}
+            <SubjectGrid onSelectSubjectAction={handleSubjectAction} onViewAllSubjects={() => setIsChapterSelectorOpen(true)} />
             <DashboardOverview
               history={history}
               onSelectRecord={handleSelectRecord}
@@ -420,83 +333,31 @@ export default function App() {
               onExportData={handleExportData}
               onImportData={handleImportData}
             />
-
-            {/* 5. Exam Generator Section (Fast Parallel AI Generation) */}
             <div ref={setupSectionRef} id="exam-setup-section" className="scroll-mt-20">
-              <ExamSetup
-                onExamCreated={handleExamCreated}
-                isLoading={isLoading}
-                setIsLoading={setIsLoading}
-                error={error}
-                setError={setError}
-              />
+              <ExamSetup onExamCreated={handleExamCreated} isLoading={isLoading} setIsLoading={setIsLoading} error={error} setError={setError} />
             </div>
-
-            {/* 6. Scheduled Exams Planner & Notifications */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <ExamScheduler />
-            </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><ExamScheduler /></div>
           </div>
         )}
 
-        {view === "EXAM" && currentExam && (
-          <ActiveExam
-            exam={currentExam}
-            onSubmitted={handleSubmitted}
-            onCancel={handleNewExam}
-          />
-        )}
-
-        {view === "RESULT" && examResult && (
-          <ExamResult
-            result={examResult}
-            onRetake={handleRetake}
-            onNewExam={handleNewExam}
-          />
-        )}
+        {view === "EXAM" && currentExam && <ActiveExam exam={currentExam} onSubmitted={handleSubmitted} onCancel={handleNewExam} />}
+        {view === "RESULT" && examResult && <ExamResult result={examResult} onRetake={handleRetake} onNewExam={handleNewExam} />}
       </main>
 
-      {/* Footer (Hidden during Active Exam) */}
       {view !== "EXAM" && (
         <footer className="border-t border-slate-200 bg-white py-6 print:hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <p>
-              HSC 2027 AI Exam Lab · জাতীয় শিক্ষাক্রম ও পাঠ্যপুস্তক বোর্ড (NCTB) মানসম্পন্ন অধ্যায়ভিত্তিক পরীক্ষা ও মূল্যায়ন
-            </p>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setIsGuidelinesOpen(true)}
-                className="hover:text-slate-900 transition-colors"
-              >
-                বোর্ড নির্দেশিকা
-              </button>
-              <span aria-hidden="true">·</span>
-              <button
-                onClick={() => setIsBoardQuestionsOpen(true)}
-                className="hover:text-slate-900 transition-colors"
-              >
-                বিগত প্রশ্নব্যাংক
-              </button>
-              <span aria-hidden="true">·</span>
-              <button
-                onClick={() => setIsRevisionNotesOpen(true)}
-                className="hover:text-slate-900 transition-colors"
-              >
-                রিভিশন নোটস
-              </button>
-              <span aria-hidden="true">·</span>
-              <button
-                onClick={() => setIsHistoryOpen(true)}
-                className="hover:text-slate-900 transition-colors"
-              >
-                ফলাফল রেকর্ড
-              </button>
+            <p>HSC 2027 AI Exam Lab · অধ্যায়ভিত্তিক পরীক্ষা ও মূল্যায়ন</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <button onClick={() => setIsGuidelinesOpen(true)} className="hover:text-slate-900 transition-colors">বোর্ড নির্দেশিকা</button><span aria-hidden="true">·</span>
+              <button onClick={() => setIsBoardQuestionsOpen(true)} className="hover:text-slate-900 transition-colors">বিগত প্রশ্নব্যাংক</button><span aria-hidden="true">·</span>
+              <button onClick={() => setIsRevisionNotesOpen(true)} className="hover:text-slate-900 transition-colors">রিভিশন নোটস</button><span aria-hidden="true">·</span>
+              <button onClick={() => setIsHistoryOpen(true)} className="hover:text-slate-900 transition-colors">ফলাফল রেকর্ড</button>
             </div>
           </div>
         </footer>
       )}
 
-      {/* Mobile Bottom Navigation Bar (Hidden during Active Exam) */}
       {view !== "EXAM" && (
         <BottomNav
           currentTab={view === "SETUP" ? "home" : "exam"}
@@ -512,50 +373,18 @@ export default function App() {
         />
       )}
 
-      {/* Global Modals */}
-      <BoardQuestionsModal
-        isOpen={isBoardQuestionsOpen}
-        onClose={() => setIsBoardQuestionsOpen(false)}
-        onSelectBoardQuestion={handleStartBoardExam}
-      />
-
-      <RevisionNotesModal
-        isOpen={isRevisionNotesOpen}
-        onClose={() => setIsRevisionNotesOpen(false)}
-      />
-
-      <ChapterSelectorModal
-        isOpen={isChapterSelectorOpen}
-        onClose={() => setIsChapterSelectorOpen(false)}
-        onSelectChapterExam={handleSelectChapterExam}
-      />
-
+      <BoardQuestionsModal isOpen={isBoardQuestionsOpen} onClose={() => setIsBoardQuestionsOpen(false)} onSelectBoardQuestion={handleStartBoardExam} />
+      <RevisionNotesModal isOpen={isRevisionNotesOpen} onClose={() => setIsRevisionNotesOpen(false)} />
+      <ChapterSelectorModal isOpen={isChapterSelectorOpen} onClose={() => setIsChapterSelectorOpen(false)} onSelectChapterExam={handleSelectChapterExam} />
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onSelectChapter={handleSelectChapterExam}
-        onOpenNotes={() => {
-          setIsSearchOpen(false);
-          setIsRevisionNotesOpen(true);
-        }}
-        onOpenBoardQuestions={() => {
-          setIsSearchOpen(false);
-          setIsBoardQuestionsOpen(true);
-        }}
+        onOpenNotes={() => { setIsSearchOpen(false); setIsRevisionNotesOpen(true); }}
+        onOpenBoardQuestions={() => { setIsSearchOpen(false); setIsBoardQuestionsOpen(true); }}
       />
-
-      <HistoryModal
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        history={history}
-        onSelectRecord={handleSelectRecord}
-        onClearHistory={handleClearHistory}
-      />
-
-      <GuidelineModal
-        isOpen={isGuidelinesOpen}
-        onClose={() => setIsGuidelinesOpen(false)}
-      />
+      <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} history={history} onSelectRecord={handleSelectRecord} onClearHistory={handleClearHistory} />
+      <GuidelineModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
     </div>
   );
 }
