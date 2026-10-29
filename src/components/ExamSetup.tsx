@@ -1,3 +1,141 @@
+import React, { useState, useEffect } from "react";
+import { HSC_SUBJECTS } from "../data/hscSyllabus";
+import { ExamType, ExamDifficulty, PublicExam } from "../types";
+import { Sparkles, Clock, HelpCircle, Layers, CheckCircle2, ChevronRight, AlertCircle, FileText } from "lucide-react";
+
+interface ExamSetupProps {
+  onExamCreated: (exam: PublicExam) => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  error: string | null;
+  setError: (err: string | null) => void;
+}
+
+export const ExamSetup: React.FC<ExamSetupProps> = ({
+  onExamCreated,
+  isLoading,
+  setIsLoading,
+  error,
+  setError,
+}) => {
+  const SETUP_STORAGE_KEY = "hsc_2027_exam_setup_v1";
+  const [selectedSubjectId, setSelectedSubjectId] = useState("physics");
+  const [selectedPaper, setSelectedPaper] = useState("১ম পত্র");
+  const [selectedChapters, setSelectedChapters] = useState<string[]>(["ভৌতজগৎ ও পরিমাপ"]);
+  const [customChapter, setCustomChapter] = useState("");
+  const [examType, setExamType] = useState<ExamType>("Both");
+  const [difficulty, setDifficulty] = useState<ExamDifficulty>("Board standard");
+  const [mcqCount, setMcqCount] = useState(10);
+  const [cqCount, setCqCount] = useState(2);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETUP_STORAGE_KEY) || "null");
+      if (!saved || typeof saved !== "object") return;
+      if (HSC_SUBJECTS.some((subject) => subject.id === saved.selectedSubjectId)) setSelectedSubjectId(saved.selectedSubjectId);
+      if (typeof saved.selectedPaper === "string") setSelectedPaper(saved.selectedPaper);
+      if (Array.isArray(saved.selectedChapters)) setSelectedChapters(saved.selectedChapters.filter((x: unknown) => typeof x === "string"));
+      if (typeof saved.customChapter === "string") setCustomChapter(saved.customChapter);
+      if (["Both", "CQ", "MCQ"].includes(saved.examType)) setExamType(saved.examType);
+      if (["Board standard", "Easy to hard", "Challenging"].includes(saved.difficulty)) setDifficulty(saved.difficulty);
+      if ([5, 10, 15, 20, 25, 30, 35, 40].includes(saved.mcqCount)) setMcqCount(saved.mcqCount);
+      if ([1, 2, 3, 4, 5, 6, 7, 8].includes(saved.cqCount)) setCqCount(saved.cqCount);
+    } catch (error) {
+      console.warn("Could not restore exam setup preferences", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETUP_STORAGE_KEY, JSON.stringify({
+        selectedSubjectId, selectedPaper, selectedChapters, customChapter,
+        examType, difficulty, mcqCount, cqCount
+      }));
+    } catch (error) {
+      console.warn("Could not save exam setup preferences", error);
+    }
+  }, [selectedSubjectId, selectedPaper, selectedChapters, customChapter, examType, difficulty, mcqCount, cqCount]);
+
+  const currentSubject = HSC_SUBJECTS.find((s) => s.id === selectedSubjectId) || HSC_SUBJECTS[0];
+  const availablePapers = currentSubject.papers;
+  const availableChapters = currentSubject.chapters[selectedPaper] || [];
+
+  const handleSubjectChange = (subjectId: string) => {
+    setSelectedSubjectId(subjectId);
+    const sub = HSC_SUBJECTS.find((s) => s.id === subjectId) || HSC_SUBJECTS[0];
+    const defaultPaper = sub.papers[0];
+    setSelectedPaper(defaultPaper);
+    const chapters = sub.chapters[defaultPaper] || [];
+    setSelectedChapters(chapters.length ? [chapters[0]] : []);
+    setCustomChapter("");
+  };
+
+  const handlePaperChange = (paper: string) => {
+    setSelectedPaper(paper);
+    const chapters = currentSubject.chapters[paper] || [];
+    setSelectedChapters(chapters.length ? [chapters[0]] : []);
+    setCustomChapter("");
+  };
+
+  const activeChapterName = customChapter.trim() || selectedChapters.join(" • ");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!activeChapterName) {
+      setError("অনুগ্রহ করে একটি অধ্যায় বা বিষয় নির্বাচন করো।");
+      return;
+    }
+
+    const finalMcq = examType === "CQ" ? 0 : mcqCount;
+    const finalCq = examType === "MCQ" ? 0 : cqCount;
+    const durationMinutes = finalMcq + finalCq * 20;
+
+    if (finalMcq + finalCq === 0) {
+      setError("অন্তত একটি প্রশ্ন সংখ্যা নির্ধারণ করো।");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/exam/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `${currentSubject.name} (${currentSubject.nameEn})`,
+          paper: selectedPaper,
+          chapter: activeChapterName,
+          chapters: customChapter.trim() ? [customChapter.trim()] : selectedChapters,
+          questionPattern: currentSubject.questionPattern || "Use standard HSC question style for this subject and paper.",
+          type: examType,
+          difficulty,
+          durationMinutes,
+          mcqCount: finalMcq,
+          cqCount: finalCq,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "প্রশ্ন তৈরি করা যায়নি। অনুগ্রহ করে পুনরায় চেষ্টা করো।");
+      }
+
+      if (!data.exam) {
+        throw new Error("সার্ভার থেকে সঠিক পরীক্ষার তথ্য পাওয়া যায়নি।");
+      }
+
+      onExamCreated(data.exam);
+    } catch (err: any) {
+      console.error("Exam generation failed:", err);
+      setError(err.message || "ইন্টারনেট সংযোগ বা API কোটা পরীক্ষা করে আবার চেষ্টা করো।");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-5xl px-0 py-2">
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
