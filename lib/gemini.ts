@@ -32,6 +32,7 @@ export async function generateWithFallback(
   params: {
     contents: any;
     temperature?: number;
+    maxOutputTokens?: number;
   }
 ): Promise<string> {
   const primaryModel = getModel();
@@ -49,6 +50,7 @@ export async function generateWithFallback(
           contents: params.contents,
           config: {
             temperature: params.temperature ?? 0.4,
+            ...(params.maxOutputTokens ? { maxOutputTokens: params.maxOutputTokens } : {}),
           },
         });
 
