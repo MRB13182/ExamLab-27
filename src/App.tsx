@@ -9,9 +9,29 @@ import { PublicExam, ExamResultData, ExamHistoryRecord } from "./types";
 import { HSC_SUBJECTS } from "./data/hscSyllabus";
 
 const HISTORY_STORAGE_KEY = "hsc_2027_exam_history";
+const APP_STORAGE_KEY = "hsc_2027_app_state_v1";
+
+type AppView = "SETUP" | "EXAM" | "RESULT";
+const viewHash = (view: AppView) => view === "EXAM" ? "#/exam" : view === "RESULT" ? "#/result" : "#/setup";
+const viewFromHash = (): AppView => {
+  const hash = window.location.hash;
+  if (hash === "#/exam") return "EXAM";
+  if (hash === "#/result") return "RESULT";
+  return "SETUP";
+};
 
 export default function App() {
-  const [view, setView] = useState<"SETUP" | "EXAM" | "RESULT">("SETUP");
+  const [view, setView] = useState<AppView>("SETUP");
+  const [appStateRestored, setAppStateRestored] = useState(false);
+
+  const navigateView = (next: AppView, replace = false) => {
+    setView(next);
+    const hash = viewHash(next);
+    if (window.location.hash !== hash) {
+      if (replace) window.history.replaceState({ view: next }, "", hash);
+      else window.history.pushState({ view: next }, "", hash);
+    }
+  };
   const [currentExam, setCurrentExam] = useState<PublicExam | null>(null);
   const [examResult, setExamResult] = useState<ExamResultData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,23 +41,68 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
-  // Load history and restore an unfinished local exam after refresh.
+  // Restore the complete local snapshot (exam, current result, records and screen),
+  // then fall back to legacy keys for users upgrading from an earlier version.
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(HISTORY_STORAGE_KEY);
-      if (stored) setHistory(JSON.parse(stored));
-      const draftKey = Object.keys(localStorage).find((key) => key.startsWith("hsc_2027_active_exam_"));
-      if (draftKey) {
-        const draft = JSON.parse(localStorage.getItem(draftKey) || "null");
-        if (draft?.exam?.examId) {
-          setCurrentExam(draft.exam);
-          setView("EXAM");
+      const snapshotRaw = localStorage.getItem(APP_STORAGE_KEY);
+      const snapshot = snapshotRaw ? JSON.parse(snapshotRaw) : null;
+      const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (Array.isArray(snapshot?.history)) setHistory(snapshot.history);
+      else if (storedHistory) {
+        const parsedHistory = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) setHistory(parsedHistory);
+      }
+
+      if (snapshot?.currentExam?.examId) setCurrentExam(snapshot.currentExam);
+      if (snapshot?.examResult) setExamResult(snapshot.examResult);
+
+      let restoredView: AppView = "SETUP";
+      if (snapshot?.view === "EXAM" && snapshot?.currentExam?.examId) restoredView = "EXAM";
+      else if (snapshot?.view === "RESULT" && snapshot?.examResult) restoredView = "RESULT";
+      else {
+        const draftKey = Object.keys(localStorage).find((key) => key.startsWith("hsc_2027_active_exam_"));
+        if (draftKey) {
+          const draft = JSON.parse(localStorage.getItem(draftKey) || "null");
+          if (draft?.exam?.examId) {
+            setCurrentExam((current) => current || draft.exam);
+            if (!snapshot?.currentExam?.examId) restoredView = "EXAM";
+          }
         }
       }
+      navigateView(restoredView, true);
     } catch (e) {
-      console.error("Failed to restore local exam data:", e);
+      console.error("Failed to restore local app data:", e);
+      navigateView("SETUP", true);
+    } finally {
+      setAppStateRestored(true);
     }
   }, []);
+
+  // Browser back/forward navigates between real app screens, including in WebView
+  // where hash navigation is supported for file:// offline builds too.
+  useEffect(() => {
+    const onHashChange = () => {
+      const requested = viewFromHash();
+      if (requested === "EXAM" && !currentExam) { setView("SETUP"); return; }
+      if (requested === "RESULT" && !examResult) { setView("SETUP"); return; }
+      setView(requested);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [currentExam, examResult]);
+
+  // Persist full application state on this device after restoration completes.
+  useEffect(() => {
+    if (!appStateRestored) return;
+    try {
+      const snapshot = { schemaVersion: 1, savedAt: new Date().toISOString(), view, currentExam, examResult, history };
+      localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(snapshot));
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.error("Failed to persist local app data:", e);
+    }
+  }, [appStateRestored, view, currentExam, examResult, history]);
 
   // Save history to localStorage
   const saveRecord = (result: ExamResultData, exam: PublicExam) => {
@@ -97,7 +162,7 @@ export default function App() {
 
   const handleExamCreated = (exam: PublicExam) => {
     setCurrentExam(exam);
-    setView("EXAM");
+    navigateView("EXAM");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -106,16 +171,16 @@ export default function App() {
     if (currentExam) {
       saveRecord(result, currentExam);
     }
-    setView("RESULT");
+    navigateView("RESULT");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleRetake = () => {
     if (currentExam) {
-      setView("EXAM");
+      navigateView("EXAM");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      setView("SETUP");
+      navigateView("SETUP");
     }
   };
 
@@ -125,13 +190,13 @@ export default function App() {
     } catch {}
     setCurrentExam(null);
     setExamResult(null);
-    setView("SETUP");
+    navigateView("SETUP");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSelectRecord = (res: ExamResultData) => {
     setExamResult(res);
-    setView("RESULT");
+    navigateView("RESULT");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
