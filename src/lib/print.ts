@@ -37,38 +37,47 @@ const css = `
 
 async function saveA4Pdf(title: string, inner: string, filename: string) {
   let host: HTMLDivElement | null = null;
-  let objectUrl: string | null = null;
+  let overlay: HTMLDivElement | null = null;
   try {
     const imported: any = await import("html2pdf.js");
     const html2pdf = imported.default || imported;
-    if (typeof html2pdf !== "function") {
-      throw new Error("PDF library did not initialize");
-    }
+    if (typeof html2pdf !== "function") throw new Error("PDF library did not initialize");
 
-    // Keep the render tree inside the viewport. Moving it far off-screen can
-    // produce blank canvases in mobile WebViews and Android browsers.
+    // Render fully opaque HTML. The previous opacity:0.01 setting also made
+    // the captured PDF almost invisible because html2canvas preserves opacity.
     host = document.createElement("div");
     host.setAttribute("aria-hidden", "true");
     host.style.position = "fixed";
     host.style.left = "0";
     host.style.top = "0";
     host.style.width = "794px";
-    host.style.maxWidth = "100vw";
-    host.style.maxHeight = "1px";
+    host.style.maxWidth = "none";
+    host.style.height = "auto";
+    host.style.maxHeight = "none";
     host.style.overflow = "visible";
-    host.style.opacity = "0.01";
+    host.style.opacity = "1";
+    host.style.visibility = "visible";
     host.style.pointerEvents = "none";
-    host.style.zIndex = "-1";
+    host.style.zIndex = "2147483000";
     host.style.background = "#ffffff";
     host.innerHTML = '<style>' + css + '</style><article class="pdf-page">' +
       '<div class="brandbar"><div class="brand-logo" aria-hidden="true"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M4 20 32 7l28 13-28 13L4 20Z" fill="#2563eb"/><path d="M15 26v14c10 8 24 8 34 0V26L32 35 15 26Z" fill="#1d4ed8"/><path d="M57 22v17" stroke="#0f2b55" stroke-width="3" stroke-linecap="round"/><circle cx="57" cy="42" r="3.5" fill="#f59e0b"/><path d="M27 39h10v6H27z" fill="#93c5fd"/></svg></div><div class="brand-copy"><div class="brand-name">HSC 2027 <span>AI Exam Lab</span></div><div class="brand-tagline">Practice Smart. Score Higher.</div></div><div class="brand-note">Better Practice<br>Brighter Results</div></div>' + inner +
       '<div class="footer">HSC 2027 AI Exam Lab · ব্যক্তিগত অনুশীলনপত্র · ' + escapeHtml(new Date().toLocaleString("bn-BD")) + '</div></article>';
-    document.body.appendChild(host);
 
-    // Wait for layout and any available web fonts before capturing.
+    // Give mobile users feedback while the opaque render page is being captured.
+    overlay = document.createElement("div");
+    overlay.setAttribute("role", "status");
+    overlay.textContent = "PDF তৈরি হচ্ছে…";
+    overlay.style.cssText = "position:fixed;inset:0;z-index:2147483500;display:flex;align-items:center;justify-content:center;background:rgba(248,250,252,.96);color:#1e3a8a;font:600 16px Arial,sans-serif;";
+    document.body.appendChild(host);
+    document.body.appendChild(overlay);
+
     await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     if (document.fonts?.ready) {
-      await Promise.race([document.fonts.ready.then(() => undefined), new Promise<void>(resolve => setTimeout(resolve, 1800))]);
+      await Promise.race([
+        document.fonts.ready.then(() => undefined),
+        new Promise<void>(resolve => window.setTimeout(resolve, 1800))
+      ]);
     }
 
     const worker = html2pdf().set({
@@ -89,35 +98,15 @@ async function saveA4Pdf(title: string, inner: string, filename: string) {
       pagebreak: { mode: ["css", "legacy"], avoid: [".q", ".mcq", ".stimulus", ".answer"] }
     }).from(host);
 
-    // Generate the PDF first; then download the finished Blob rather than
-    // relying on the library's browser-specific automatic save behavior.
-    const pdfBlob: Blob = await worker.outputPdf("blob");
-    if (!(pdfBlob instanceof Blob) || pdfBlob.size < 1000) {
-      throw new Error("Generated PDF was empty or invalid");
-    }
-
-    objectUrl = URL.createObjectURL(pdfBlob);
-    const link = document.createElement("a");
-    link.href = objectUrl;
-    link.download = filename;
-    link.rel = "noopener";
-    link.style.display = "none";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    // Do not revoke immediately; some mobile browsers begin reading the Blob
-    // only after the click event has returned.
-    window.setTimeout(() => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    }, 30000);
-    objectUrl = null;
+    // Use html2pdf's supported save pipeline instead of treating its Worker
+    // object as a Blob. This avoids generating/revoking a broken object URL.
+    await worker.save(filename);
   } catch (error) {
     console.error("PDF download failed:", error);
     window.alert("PDF তৈরি বা ডাউনলোড করা যায়নি। ব্রাউজারের Downloads অনুমতি দেখে আবার চেষ্টা করো।");
   } finally {
+    if (overlay?.parentNode) overlay.parentNode.removeChild(overlay);
     if (host?.parentNode) host.parentNode.removeChild(host);
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
 
