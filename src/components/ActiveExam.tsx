@@ -54,6 +54,8 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
   const [timeWarning, setTimeWarning] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const submissionStartedRef = useRef(false);
+  const latestAnswersRef = useRef({ mcqAnswers, cqAnswers, uploadedImage, secondsRemaining });
+  useEffect(() => { latestAnswersRef.current = { mcqAnswers, cqAnswers, uploadedImage, secondsRemaining }; }, [mcqAnswers, cqAnswers, uploadedImage, secondsRemaining]);
   const draftKey = "hsc_2027_active_exam_" + exam.examId;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -188,15 +190,16 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
   };
 
   // Submit Exam API Call
-  const executeSubmission = async () => {
+  const executeSubmission = async (automatic = false) => {
     if (submissionStartedRef.current) return;
     submissionStartedRef.current = true;
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const latest = latestAnswersRef.current;
     const combinedAnswers: Record<string, string> = {
-      ...mcqAnswers,
-      ...cqAnswers,
+      ...latest.mcqAnswers,
+      ...latest.cqAnswers,
     };
 
     try {
@@ -207,12 +210,13 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
         answers: combinedAnswers,
       };
 
-      if (uploadedImage) {
+      if (latest.uploadedImage) {
         payload.image = {
-          mimeType: uploadedImage.mimeType,
-          data: uploadedImage.data,
+          mimeType: latest.uploadedImage.mimeType,
+          data: latest.uploadedImage.data,
         };
       }
+      if (automatic) payload.autoSubmitted = true;
 
       const response = await fetch("/api/exam/submit", {
         method: "POST",
@@ -230,7 +234,7 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
         throw new Error("ফলাফলের তথ্য পাওয়া যায়নি।");
       }
 
-      const timeTaken = totalSeconds - secondsRemaining;
+      const timeTaken = totalSeconds - latestAnswersRef.current.secondsRemaining;
       try { localStorage.removeItem(draftKey); } catch {}
       onSubmitted({
         ...data.result,
@@ -246,7 +250,9 @@ export const ActiveExam: React.FC<ActiveExamProps> = ({
   };
 
   const handleAutoSubmit = () => {
-    executeSubmission();
+    if (submissionStartedRef.current) return;
+    setShowConfirmModal(false);
+    void executeSubmission(true);
   };
 
   const answeredMcqCount = Object.keys(mcqAnswers).length;
