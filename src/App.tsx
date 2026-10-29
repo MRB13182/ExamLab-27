@@ -390,25 +390,58 @@ export default function App() {
       />
 
       {/* Main View Area with Mobile Bottom Nav Padding */}
-      <main className={`flex-1 ${view !== "EXAM" ? "pb-24 lg:pb-12" : ""}`}>
+      <main className={`mx-auto w-full max-w-[1440px] flex-1 px-4 pb-24 pt-5 sm:px-6 lg:px-8 ${view !== "EXAM" ? "lg:pb-12" : "px-0 sm:px-0 lg:px-0"}`}>
         {view === "SETUP" && (
-          <div className="space-y-6 sm:space-y-8">
-            {/* 1. Dashboard Hero Banner with Student Illustration */}
-            <DashboardHero
-              onStartExamClick={scrollToSetup}
-              onExploreSubjectsClick={() => setIsChapterSelectorOpen(true)}
-            />
+          <div className="space-y-7 sm:space-y-9">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
+              <DashboardHero
+                onStartExamClick={scrollToSetup}
+                onExploreSubjectsClick={() => setIsChapterSelectorOpen(true)}
+              />
+              <section className="flex flex-col justify-between gap-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div>
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    <span className="h-2 w-2 rounded-full bg-blue-600" /> তোমার শেখার ওয়ার্কস্পেস
+                  </div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">আজকের প্রস্তুতি</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">বিষয় নির্বাচন করো, সময় ধরে পরীক্ষা দাও, তারপর ভুলের ব্যাখ্যা ও উত্তর বিশ্লেষণ দেখে পরের প্রস্তুতি ঠিক করো।</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" onClick={scrollToSetup} className="rounded-2xl bg-blue-700 px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-blue-800">
+                    <span className="block text-base">নতুন পরীক্ষা</span><span className="mt-1 block text-xs font-medium text-blue-100">MCQ / CQ / মিশ্র</span>
+                  </button>
+                  <button type="button" onClick={() => setIsHistoryOpen(true)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-bold text-slate-800 transition hover:border-blue-200 hover:bg-blue-50">
+                    <span className="block text-base">রেজাল্ট বিশ্লেষণ</span><span className="mt-1 block text-xs font-medium text-slate-500">{history.length}টি সংরক্ষিত পরীক্ষা</span>
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-3 py-1.5">MCQ: প্রতি প্রশ্নে ১ মিনিট</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1.5">CQ: প্রতি প্রশ্নে ২০ মিনিট</span>
+                </div>
+              </section>
+            </div>
 
-            {/* 2. 6-Card High-Level Metrics Summary */}
-            <MetricCards history={history} />
+            <section aria-label="তোমার অগ্রগতি">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                <div><p className="text-xs font-bold uppercase tracking-[.16em] text-blue-700">Progress overview</p><h2 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">তোমার অগ্রগতি এক নজরে</h2></div>
+                <button type="button" onClick={() => setIsHistoryOpen(true)} className="text-sm font-bold text-blue-700 hover:text-blue-900">সব রেজাল্ট দেখো →</button>
+              </div>
+              <MetricCards history={history} />
+            </section>
 
-            {/* 3. 6-Card Interactive Subject Grid with Quick MCQ/CQ Action Buttons */}
-            <SubjectGrid
-              onSelectSubjectAction={handleSubjectAction}
-              onViewAllSubjects={() => setIsChapterSelectorOpen(true)}
-            />
+            <section aria-label="বিষয় নির্বাচন">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                <div><p className="text-xs font-bold uppercase tracking-[.16em] text-blue-700">Learn by subject</p><h2 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">কোন বিষয়ে অনুশীলন করবে?</h2><p className="mt-1 text-sm text-slate-500">বিষয় বা অধ্যায় অনুযায়ী প্র্যাকটিস তৈরি করো</p></div>
+                <button type="button" onClick={() => setIsChapterSelectorOpen(true)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700">সব অধ্যায় দেখো</button>
+              </div>
+              <SubjectGrid onSelectSubjectAction={handleSubjectAction} onViewAllSubjects={() => setIsChapterSelectorOpen(true)} />
+            </section>
 
-            {/* 4. 3-Column Dashboard Overview (Recent History, Progress Chart, Quick Actions) */}
+            <section ref={setupSectionRef} id="exam-setup-section" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+              <div className="mb-5 max-w-2xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-blue-700">Assessment builder</p><h2 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">নিজের পরীক্ষা তৈরি করো</h2><p className="mt-1 text-sm leading-6 text-slate-500">সিলেবাস, প্রশ্নের ধরন, সময় ও কঠিনতার স্তর বেছে নাও।</p></div>
+              <ExamSetup onExamCreated={handleExamCreated} isLoading={isLoading} setIsLoading={setIsLoading} error={error} setError={setError} />
+            </section>
+
             <DashboardOverview
               history={history}
               onSelectRecord={handleSelectRecord}
@@ -421,38 +454,21 @@ export default function App() {
               onImportData={handleImportData}
             />
 
-            {/* 5. Exam Generator Section (Fast Parallel AI Generation) */}
-            <div ref={setupSectionRef} id="exam-setup-section" className="scroll-mt-20">
-              <ExamSetup
-                onExamCreated={handleExamCreated}
-                isLoading={isLoading}
-                setIsLoading={setIsLoading}
-                error={error}
-                setError={setError}
-              />
-            </div>
-
-            {/* 6. Scheduled Exams Planner & Notifications */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-3"><h2 className="text-lg font-extrabold text-slate-900">পরবর্তী পরীক্ষার পরিকল্পনা</h2><p className="text-sm text-slate-500">রুটিন তৈরি করো এবং নিয়মিত প্রস্তুতির অভ্যাস বজায় রাখো।</p></div>
               <ExamScheduler />
             </div>
           </div>
         )}
 
         {view === "EXAM" && currentExam && (
-          <ActiveExam
-            exam={currentExam}
-            onSubmitted={handleSubmitted}
-            onCancel={handleNewExam}
-          />
+          <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+            <ActiveExam exam={currentExam} onSubmitted={handleSubmitted} onCancel={handleNewExam} />
+          </div>
         )}
 
         {view === "RESULT" && examResult && (
-          <ExamResult
-            result={examResult}
-            onRetake={handleRetake}
-            onNewExam={handleNewExam}
-          />
+          <ExamResult result={examResult} onRetake={handleRetake} onNewExam={handleNewExam} />
         )}
       </main>
 
