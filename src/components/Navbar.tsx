@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { BookOpen, History, Award, Sparkles, Download, Menu } from "lucide-react";
+import { History, Award, Sparkles, Download, Menu, Smartphone } from "lucide-react";
+
+const DEBUG_APK_URL = "https://github.com/MRB13182/ExamLab-27/raw/refs/heads/main/APK_DOWNLOAD/app-debug.apk";
 
 interface NavbarProps {
   onGoHome: () => void;
@@ -33,7 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button onClick={onGoHome} disabled={isInExam} className="hover:text-slate-900 disabled:opacity-40">পরীক্ষা প্রস্তুতি</button>
           <button onClick={onOpenHistory} className="flex items-center gap-1.5 hover:text-slate-900"><History className="w-4 h-4 text-slate-400"/>পরীক্ষার রেকর্ড {historyCount > 0 ? "(" + historyCount + ")" : ""}</button>
           <button onClick={onOpenGuidelines} className="flex items-center gap-1.5 hover:text-slate-900"><Award className="w-4 h-4 text-slate-400"/>নির্দেশিকা</button>
-          <button onClick={onExportData} title="সব ডেটা ডাউনলোড" className="p-2 rounded-xl text-indigo-700 border border-indigo-100 hover:bg-indigo-50"><Download className="w-5 h-5"/></button>
+          <a href={DEBUG_APK_URL} download="HSC-2027-AI-Exam-Lab-debug.apk" title="Android APK ডাউনলোড" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-indigo-700 border border-indigo-100 hover:bg-indigo-50 whitespace-nowrap"><Smartphone className="w-4 h-4"/><span>APK ডাউনলোড</span></a>
+          <button onClick={onExportData} title="সব ডেটা ব্যাকআপ ডাউনলোড" className="p-2 rounded-xl text-indigo-700 border border-indigo-100 hover:bg-indigo-50"><Download className="w-5 h-5"/></button>
         </nav>
         <div className="relative flex items-center gap-2">
           <button onClick={onGoHome} disabled={isInExam} className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-40 shadow-sm whitespace-nowrap">
@@ -46,7 +49,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="md:hidden absolute right-0 top-12 z-50 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl flex flex-col gap-1">
               <button onClick={() => { onOpenHistory(); closeMenu(); }} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><History className="w-4 h-4"/>পরীক্ষার রেকর্ড</button>
               <button onClick={() => { onOpenGuidelines(); closeMenu(); }} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Award className="w-4 h-4"/>নির্দেশিকা</button>
-              <button onClick={() => { onExportData(); closeMenu(); }} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Download className="w-4 h-4"/>সব ডেটা ডাউনলোড</button>
+              <a href={DEBUG_APK_URL} download="HSC-2027-AI-Exam-Lab-debug.apk" onClick={closeMenu} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-indigo-700"><Smartphone className="w-4 h-4"/>APK ডাউনলোড</a>
+              <button onClick={() => { onExportData(); closeMenu(); }} className="rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Download className="w-4 h-4"/>সব ডেটা ব্যাকআপ</button>
             </div>
           )}
         </div>
