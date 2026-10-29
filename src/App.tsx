@@ -159,6 +159,29 @@ export default function App() {
     window.setTimeout(() => URL.revokeObjectURL(url), 30000);
   };
 
+  const handleImportData = async (file: File) => {
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (parsed?.app !== "HSC 2027 AI Exam Lab" || !parsed?.localStorage || typeof parsed.localStorage !== "object") {
+        throw new Error("এই ফাইলটি HSC 2027 AI Exam Lab backup নয়।");
+      }
+      // Only restore this app's keys. Never write arbitrary keys from an imported file.
+      Object.keys(localStorage).filter((key) => key.startsWith("hsc_2027_")).forEach((key) => localStorage.removeItem(key));
+      for (const [key, value] of Object.entries(parsed.localStorage as Record<string, unknown>)) {
+        if (!key.startsWith("hsc_2027_")) continue;
+        if (typeof value === "string") localStorage.setItem(key, value);
+      }
+      if (Array.isArray(parsed.history)) {
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(parsed.history));
+      }
+      window.alert("Backup restore হয়েছে। আগের অবস্থা লোড করতে অ্যাপটি রিলোড হচ্ছে।");
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to restore backup:", error);
+      window.alert(error instanceof Error ? error.message : "Backup restore করা যায়নি। JSON ফাইলটি পরীক্ষা করো।");
+    }
+  };
+
   const handleClearHistory = () => {
     setHistory([]);
     try {
@@ -218,6 +241,7 @@ export default function App() {
         historyCount={history.length}
         isInExam={view === "EXAM"}
         onExportData={handleExportData}
+        onImportData={handleImportData}
       />
 
       {/* Main View Area */}
