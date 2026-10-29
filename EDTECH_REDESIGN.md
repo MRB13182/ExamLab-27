@@ -1,19 +1,17 @@
-# EdTech structure refresh
+# Student-only Exam Lab
 
-## Design goals
-- Organize the student experience around practice, assessment, feedback, and progress.
-- Keep scores and activity statistics derived from actual local history; avoid illustrative numbers that look like the student's own results.
-- Preserve existing exam mechanics, API contracts, answer review, syllabus tools, print/PDF behavior, and APK download route.
+This repository surface is intentionally focused on six steps:
+1. Select the preferred subject, paper, chapter, and MCQ/CQ format.
+2. Start a timed examination.
+3. Auto-submit when time expires, or submit manually before time ends.
+4. Mark MCQ answers and show the correct answer with explanation.
+5. Evaluate CQ answers with rubric-based feedback/model answers where available.
+6. Print or save the finished review as PDF.
 
-## Preserved contract
-- MCQ default: 1 minute per question.
-- CQ default: 20 minutes per question.
-- Existing API can accept a duration override and caps it server-side.
-- PDF workflows remain browser print / Save as PDF. No APK artifacts are changed.
+Timing defaults retained: 1 minute per MCQ and 20 minutes per CQ.
 
-## Next recommended structural phases
-1. Separate student dashboard, practice creation, exam taking, and result analysis into explicit routes.
-2. Add backend persistence and student identity before claiming cross-device progress or leaderboards.
-3. Add question-bank provenance, content review, assessment blueprints, and admin-authored tests.
-4. Add unit/integration tests for timer expiry, MCQ marking, CQ rubric limits, recovery, and PDF print layouts.
-5. Ensure generated assets and authenticated data are handled in a server-only boundary.
+Explicitly excluded: admin panels, teacher dashboards, leaderboards, ranking, institutional workflows, sign-in/accounts, and oversized analytics.
+
+Preserve the existing APK download button/route/file and the associated update/storage flow. The local browser persistence used for exam drafts/history is also retained; it is distinct from APK download storage.
+
+Validation required before merge: npm run lint, npm run build, npm test, and manual checks for manual-submit, timeout auto-submit, MCQ explanations, CQ review, and browser Save as PDF.
