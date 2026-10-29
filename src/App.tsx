@@ -20,6 +20,7 @@ import { MistakeBookModal } from "./components/MistakeBookModal";
 import { PublicExam, ExamResultData, ExamHistoryRecord, ExamType } from "./types";
 import { HSC_SUBJECTS } from "./data/hscSyllabus";
 import { BoardQuestionSet } from "./data/boardQuestions";
+import { restoreMissingAppStorage, saveRedundantAppStorage } from "./lib/resilientStorage";
 
 const HISTORY_STORAGE_KEY = "hsc_2027_exam_history";
 const APP_STORAGE_KEY = "hsc_2027_app_state_v1";
@@ -64,7 +65,11 @@ export default function App() {
 
   // Restore a saved snapshot before writing defaults, to avoid overwriting an older session.
   useEffect(() => {
-    try {
+    let cancelled = false;
+    const restoreApp = async () => {
+      try {
+      await restoreMissingAppStorage();
+      if (cancelled) return;
       const snapshotRaw = localStorage.getItem(APP_STORAGE_KEY);
       const snapshot = snapshotRaw ? JSON.parse(snapshotRaw) : null;
       const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
@@ -90,12 +95,15 @@ export default function App() {
         }
       }
       navigateView(restoredView, true);
-    } catch (e) {
-      console.error("Failed to restore local app data:", e);
-      navigateView("SETUP", true);
-    } finally {
-      setAppStateRestored(true);
-    }
+      } catch (e) {
+        console.error("Failed to restore local app data:", e);
+        navigateView("SETUP", true);
+      } finally {
+        if (!cancelled) setAppStateRestored(true);
+      }
+    };
+    void restoreApp();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -125,10 +133,26 @@ export default function App() {
       const snapshot = { schemaVersion: 1, savedAt: new Date().toISOString(), view, currentExam, examResult, history };
       localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(snapshot));
       localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+      void saveRedundantAppStorage();
     } catch (e) {
       console.error("Failed to persist local app data:", e);
     }
   }, [appStateRestored, view, currentExam, examResult, history]);
+
+  // Also capture answer drafts written directly by the exam component while a test is in progress.
+  useEffect(() => {
+    if (!appStateRestored) return;
+    const backupNow = () => { void saveRedundantAppStorage(); };
+    backupNow();
+    const intervalId = window.setInterval(backupNow, 15000);
+    window.addEventListener("pagehide", backupNow);
+    window.addEventListener("beforeunload", backupNow);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("pagehide", backupNow);
+      window.removeEventListener("beforeunload", backupNow);
+    };
+  }, [appStateRestored]);
 
   const saveRecord = (result: ExamResultData, exam: PublicExam) => {
     const newRecord: ExamHistoryRecord = {
